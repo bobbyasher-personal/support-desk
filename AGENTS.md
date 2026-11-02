@@ -22,22 +22,22 @@ It is built bite by bite through an Agent Engineering study track (22 bites, Mon
 
 - **M1 (bite B8):** one agent does the whole job end to end, under gates, with receipts.
 - **M2 (bite S4):** the team version — kept only if it beats M1 on the product's own exam (quality, cost per ticket, latency); if M1 wins, M1 ships and the numbers say why.
-- **M3 (bite S6):** production-shaped service; a 100-ticket batch runs unattended; cost per resolved ticket is known.
+- **M3 (bite S6):** production-shaped service, deployed on Vercel at a live URL; a 100-ticket batch runs unattended; cost per resolved ticket is known.
 - **M4 (bite C1):** finished — failure drills pass or carry named mitigations; eval gate green on 20 unseen tickets.
 
 ## Build sequence (bite map)
 
 - **Phase 0 — Foundations (no code):** F1 agent vs chatbot vs workflow · F2 the model, in plain terms (the never-invent list) · F3 the product frame (before/after, success metric, failure cost, approval line) · F4 the system map.
 - **Phase 1 — One agent:** B1 bare-hands loop (raw model API, no framework, one stub tool) · B2 loop shapes (ReAct / plan-and-execute / reflection) + brakes (step & cost budgets, no-progress rule) · B3 tools & contracts (one tool per business activity; strict schemas; agent-readable errors) · B4 trust layer v1 · B5 memory & retrieval (chunking, embeddings, hybrid search, checked citations) · B6 context engineering (per-step desk-packing, compaction) · B7 rebuild in **LangGraph** with checkpointing · B8 control graph (workflow spine + agent nodes + deterministic gates).
-- **Phase 2 — Prove it, scale it:** S1 evals grown up (end-state grading, trajectory checks, pass^k) · S2 observability (traces, budgets, weekly error analysis) · S3 multi-agent patterns (design only) · S4 build the team, A/B vs M1 · S5 toolbox becomes an **MCP server** (prove it by driving it from a foreign agent) · S6 production pack (idempotency keys on every write, backoff/timeouts, model gateway + per-ticket cost ceiling, queue + stateless workers, 100-ticket batch) · S7 self-improvement flywheel (context loop + harness loop; see the law below) · S8 agentic UX (operator console: plan-first, approval cards, citations, receipts, autonomy dial).
+- **Phase 2 — Prove it, scale it:** S1 evals grown up (end-state grading, trajectory checks, pass^k) · S2 observability (traces, budgets, weekly error analysis) · S3 multi-agent patterns (design only) · S4 build the team, A/B vs M1 · S5 toolbox becomes an **MCP server**, deployed on Vercel (prove it by driving it from a foreign agent, against the live URL) · S6 production pack (idempotency keys on every write, backoff/timeouts, model gateway + per-ticket cost ceiling, deployed on Vercel as Functions with fan-out concurrency and checkpoint-resume for approval waits, 100-ticket batch) · S7 self-improvement flywheel (context loop + harness loop; see the law below) · S8 agentic UX (operator console — Next.js on Vercel: plan-first, approval cards, citations, receipts, autonomy dial).
 - **Phase 3 — Finish:** C1 hardening drills · C2 demo.
 
 Product idea can be swapped at bite F3 — architecture and sequence stay identical.
 
 ## Current status
 
-- Foundations underway: **F1 delivered Oct 30, 2026**; F2 next. **No product code yet** — the first build lands at bite B1.
-- Repo so far: `README.md` + this file. Code arrives bite by bite, in this repo.
+- Foundations underway: **F1 delivered Oct 30, F2 delivered Oct 31, F3 delivered Nov 2, 2026** — all three self-checks cleared 3/3. **Product locked at F3 (Nov 2, 2026): Support Desk** — Bobby used the swap window and kept it. **Deployment home decided Nov 1, 2026: Vercel** — operator console (Next.js), agent service (Vercel Functions; Python/LangGraph core unchanged), MCP server, all at live URLs; Vercel AI Gateway is the deployed model gateway. **No product code yet** — the first build lands at bite B1.
+- Repo so far: `README.md`, `PRODUCT_BRIEF.md` (the F3 product brief — job, before/after, success metric, failure cost, approval line; written Nov 2, 2026) + this file. Code arrives bite by bite, in this repo.
 
 ## Non-negotiable rules (the gates are the product)
 
@@ -53,6 +53,7 @@ Product idea can be swapped at bite F3 — architecture and sequence stay identi
 ## Working agreements
 
 - **Build-first:** every bite adds a working piece to this repo — nothing is a throwaway exercise. Code is written *with* the owner (he directs and inspects every artifact and trace), never silently.
+- **Real over toy (owner, Nov 1, 2026):** default to the most real version that fits the bite — live deployment over localhost, realistic messy data over clean fixtures, a real human at the approval gate over a simulated click. A stub is allowed only when it's named as a stub, with the gap to the real version stated.
 - **Bare hands before frameworks:** B1–B6 use the raw model API on purpose; LangGraph arrives at B7, MCP at S5. Don't pull either in early.
 - **One tool per business activity**, named in business words (`get_order_status`, not `svc_ord_qry_41`), each tool a folder: contract (JSON schema) + code + examples.
 - **Model-to-task matching:** small cheap models route and classify; strong models draft and judge.

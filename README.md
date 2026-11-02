@@ -18,7 +18,7 @@ Built bite by bite through the Agent Engineering study track — plan: `~/worksp
 
 - **M1 (bite B8):** one agent does the whole job end to end, under gates, with receipts.
 - **M2 (bite S4):** the team version — kept only if it beats M1 on the product's own exam.
-- **M3 (bite S6):** production-shaped service; 100-ticket batch unattended; cost per resolved ticket known.
+- **M3 (bite S6):** production-shaped service, deployed on Vercel at a live URL; 100-ticket batch unattended; cost per resolved ticket known.
 - **M4 (bite C1):** finished — failure drills pass or carry named mitigations; eval gate green on 20 unseen tickets.
 
 ## Status
