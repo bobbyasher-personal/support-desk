@@ -52,6 +52,7 @@ Product idea can be swapped at bite F3 — architecture and sequence stay identi
 
 ## Working agreements
 
+- **Build location — HYBRID (decided Nov 3, 2026):** study bites and small builds happen with Scout in Muse (co-built, trace by trace — that's where the learning is). Heavy, multi-file builds happen in **Muse Code** on the owner's machine, from a local clone of this repo — the framework rebuild (B7), the team build (S4), the MCP server (S5), and the production pack (S6) are the expected Muse Code builds. Either way, work lands in this repo, gets verified against the eval gate, and this file is updated in the same commit when the picture changes.
 - **Build-first:** every bite adds a working piece to this repo — nothing is a throwaway exercise. Code is written *with* the owner (he directs and inspects every artifact and trace), never silently.
 - **Real over toy (owner, Nov 1, 2026):** default to the most real version that fits the bite — live deployment over localhost, realistic messy data over clean fixtures, a real human at the approval gate over a simulated click. A stub is allowed only when it's named as a stub, with the gap to the real version stated.
 - **Bare hands before frameworks:** B1–B6 use the raw model API on purpose; LangGraph arrives at B7, MCP at S5. Don't pull either in early.
