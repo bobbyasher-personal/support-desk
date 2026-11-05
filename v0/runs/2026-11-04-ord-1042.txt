@@ -1,0 +1,26 @@
+TICKET: MY PACKAGE IS A WEEK LATE AND SUPPORT KEEPS IGNORING ME. THIS IS UNACCEPTABLE. My order is ORD-1042 - where is it??
+Traceback (most recent call last):
+  File "/home/hatch/workspace/agent-engineering/support-desk/v0/agent.py", line 187, in <module>
+    draft = run_agent(ticket)
+            ^^^^^^^^^^^^^^^^^
+  File "/home/hatch/workspace/agent-engineering/support-desk/v0/agent.py", line 145, in run_agent
+    reply = call_model(messages)
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/home/hatch/workspace/agent-engineering/support-desk/v0/agent.py", line 129, in call_model
+    with urllib.request.build_opener(NoRedirect()).open(request, timeout=60) as response:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 521, in open
+    response = meth(req, response)
+               ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 630, in http_response
+    response = self.parent.error(
+               ^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 559, in error
+    return self._call_chain(*args)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 492, in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 639, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 400: Bad Request

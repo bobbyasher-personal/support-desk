@@ -36,8 +36,9 @@ Product idea can be swapped at bite F3 — architecture and sequence stay identi
 
 ## Current status
 
-- Foundations underway: **F1 delivered Oct 30, F2 delivered Oct 31, F3 delivered Nov 2, 2026** — all three self-checks cleared 3/3. **Product locked at F3 (Nov 2, 2026): Support Desk** — Bobby used the swap window and kept it. **Deployment home decided Nov 1, 2026: Vercel** — operator console (Next.js), agent service (Vercel Functions; Python/LangGraph core unchanged), MCP server, all at live URLs; Vercel AI Gateway is the deployed model gateway. **No product code yet** — the first build lands at bite B1.
-- Repo so far: `README.md`, `PRODUCT_BRIEF.md` (the F3 product brief — job, before/after, success metric, failure cost, approval line; written Nov 2, 2026) + this file. Code arrives bite by bite, in this repo.
+- Foundations underway: **F1 delivered Oct 30, F2 delivered Oct 31, F3 delivered Nov 2, 2026** — all three self-checks cleared 3/3. **Product locked at F3 (Nov 2, 2026): Support Desk** — Bobby used the swap window and kept it. **Deployment home decided Nov 1, 2026: Vercel** — operator console (Next.js), agent service (Vercel Functions; Python/LangGraph core unchanged), MCP server, all at live URLs; Vercel AI Gateway is the deployed model gateway. **First code landed at B1 (Nov 4, 2026)** — see the B1 bullet below.
+- **First code landed at B1 (Nov 4, 2026):** `v0/agent.py`, a bare-hands loop (raw Anthropic Messages API via the `custom.anthropic` connector, stdlib only, one stub tool `get_order_status` over canned orders). First successful run Nov 4, 2026 on a messy late-package ticket (ORD-1042): 2 steps, draft written from tool facts only, one soft embellishment spotted in the draft ("working to clear the backlog" was not in the tool result). Trace saved at `v0/runs/2026-11-04-ord-1042-run2.txt`.
+- Repo so far: `README.md`, `PRODUCT_BRIEF.md` (the F3 product brief — job, before/after, success metric, failure cost, approval line; written Nov 2, 2026), `v0/` (B1 agent + run traces) + this file. Code arrives bite by bite, in this repo.
 
 ## Non-negotiable rules (the gates are the product)
 
