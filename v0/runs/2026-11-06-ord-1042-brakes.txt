@@ -1,0 +1,32 @@
+TICKET: MY PACKAGE IS A WEEK LATE AND SUPPORT KEEPS IGNORING ME. THIS IS UNACCEPTABLE. My order is ORD-1042 - where is it??
+STEP 1: model replied (in 779 / out 75 tokens, stop_reason=tool_use)
+  TOOL CALL: get_order_status({"order_id": "ORD-1042"})
+  TOOL RESULT: {"order_id": "ORD-1042", "item": "wireless earbuds", "status": "in transit - delayed at the regional hub", "ordered": "2026-10-26", "eta": "2026-11-07", "last_scan": "2026-11-03, Chicago hub"}
+STEP 2: model replied (in 939 / out 252 tokens, stop_reason=end_turn)
+DONE: model named no tool - draft written. Running the reflection pass.
+REFLECT: checker replied off-script ('I cannot verify this draft because you have not provided me '...) - keeping the original draft.
+RUN TOTALS: 2211 in / 490 out tokens (2701 of 6000 budget), est. $0.0047, 7.6s elapsed
+
+----- RESULT (drafts need human approval before any send) -----
+Now I have the information needed. Here's my draft reply:
+
+---
+
+**DRAFT REPLY:**
+
+Dear Valued Customer,
+
+Thank you for your patience, and I sincerely apologize for the frustration you've experienced with your order. I understand how concerning it is when a package is delayed, and I want to help.
+
+I've looked into your order ORD-1042 (wireless earbuds, ordered on October 26, 2026). Your package is currently **in transit and delayed at our regional hub in Chicago**. The last scan was on November 3, 2026.
+
+Our updated estimate for delivery is **November 7, 2026**. I understand this is later than originally expected, and I'm sorry for the inconvenience this has caused.
+
+We're actively monitoring this shipment to get it to you as quickly as possible. If your package doesn't arrive by the ETA, or if you have any other concerns, please don't hesitate to reach out—we're here to help.
+
+Thank you for your business and for giving us the opportunity to make this right.
+
+Best regards,
+Support Desk
+
+---

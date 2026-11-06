@@ -1,0 +1,19 @@
+TICKET: Hi, my order ORD-9999 was supposed to arrive two weeks ago and there's still nothing. Can you check where it is?
+STEP 1: model replied (in 768 / out 75 tokens, stop_reason=tool_use)
+  TOOL CALL: get_order_status({"order_id": "ORD-9999"})
+  TOOL RESULT: Error: no order found with id 'ORD-9999'. Order ids look like ORD-1234. If the customer gave a different kind of number, ask them for the order id on their confirmation email.
+STEP 2: model replied (in 902 / out 142 tokens, stop_reason=end_turn)
+DONE: model named no tool - draft written. Running the reflection pass.
+REFLECT: draft PASSED the checklist unchanged.
+RUN TOTALS: 2104 in / 222 out tokens (2326 of 6000 budget), est. $0.0032, 3.8s elapsed
+
+----- RESULT (drafts need human approval before any send) -----
+**DRAFT REPLY:**
+
+Thank you for contacting us about your order.
+
+I wasn't able to find an order with the ID ORD-9999 in our system. This could mean the order ID may have been entered incorrectly, or there may be a different number associated with your order.
+
+Could you please double-check the order ID from your confirmation email and provide it again? Order IDs typically look like ORD-1234. Once you provide the correct order ID, I'll be happy to look up the status and find out where your package is.
+
+We appreciate your patience and look forward to resolving this for you quickly.
