@@ -1,0 +1,65 @@
+{
+  "drafts": [
+    {
+      "draft_id": "DRAFT-0001",
+      "ticket_ref": "ORD-1042",
+      "draft_text": "Thank you for your patience, and I sincerely apologize for the frustration you're experiencing with your order.\n\nI've looked up your order ORD-1042 (wireless earbuds, ordered October 26th) and can confirm it is currently in transit but delayed at the regional hub in Chicago. The last tracking scan was on November 3rd. Your estimated delivery date is November 7th.\n\nI understand how frustrating it is when a package doesn't arrive as expected. I want to make this right for you.\n\nAccording to our policy, if a package is more than 7 days past its estimated delivery date or if tracking hasn't moved for 5 days, you have the option to choose either a full refund or a free reshipment of your order.\n\nPlease let me know which option you'd prefer\u2014a refund or reshipment\u2014and I'll process it for you right away.\n\nAgain, I apologize for this delay and for any frustration our support team may have caused.",
+      "revision_of": null,
+      "status": "awaiting human approval"
+    },
+    {
+      "draft_id": "DRAFT-0002",
+      "ticket_ref": "ticket about ORD-1042",
+      "draft_text": "Thank you for reaching out, and I sincerely apologize for the frustration with your order.\n\nI've checked the status of your order ORD-1042 (wireless earbuds). Your package is currently in transit but has been delayed at the regional hub in Chicago. The last tracking scan was November 3rd, and the current estimated delivery date is November 7th.\n\nI understand this delay is unacceptable, and we take this seriously. Since your package is experiencing a delay, you have options:\n\n1. **Full refund** \u2013 We can process a complete refund of your order\n2. **Free reshipment** \u2013 We can send you a replacement package at no cost\n\nPlease let us know which option you prefer, and we'll get this resolved for you right away. Again, I apologize for the inconvenience and for any previous wait times in getting support.",
+      "revision_of": null,
+      "status": "awaiting human approval"
+    },
+    {
+      "draft_id": "DRAFT-0003",
+      "ticket_ref": "ticket about ORD-1042",
+      "draft_text": "Hi,\n\nThanks for reaching out. I've looked up your order ORD-1042 (wireless earbuds). Here's what I found:\n\n**Current Status:**\nYour order is in transit and currently delayed at the regional hub in Chicago. It was last scanned on November 3, 2026, and the updated estimated delivery date is November 7, 2026.\n\n**About your refund question:**\nAccording to our policy, if a package is more than 7 days past its estimated delivery date, or if tracking hasn't moved for 5 days, you have the option to choose either a full refund or a free reshipment. \n\nSince your order is showing recent activity (the Chicago scan from November 3rd), it's still actively moving through our system. I recommend giving it a couple more days to see if it arrives by the updated estimate. However, if it doesn't arrive by November 7th or if tracking stops showing movement, you'll be eligible to request either option.\n\nIf you need to proceed with a refund at that point, approved refunds go back to your original payment method within 5 to 7 business days, and you'll receive an email confirmation.\n\nLet me know if you have any other questions!\n\nBest regards,\nSupport Team",
+      "revision_of": null,
+      "status": "awaiting human approval"
+    },
+    {
+      "draft_id": "DRAFT-0004",
+      "ticket_ref": "ticket about ORD-1042",
+      "draft_text": "Hi,\n\nThanks for reaching out. I've looked up your order ORD-1042 (wireless earbuds). Here's what I found:\n\n**Current Status:**\nYour order is in transit and currently delayed at the regional hub in Chicago. It was last scanned on November 3, 2026, and the estimated delivery date is November 7, 2026.\n\n**About your refund question:**\nI sincerely apologize for the delay on your order. According to our policy, if a package is more than 7 days past its estimated delivery date, or if tracking hasn't moved for 5 days, you have the option to choose either a full refund or a free reshipment.\n\nSince your order is still actively moving through our system, I'd recommend waiting to see if it arrives by November 7th. However, if it doesn't arrive by that date or if tracking stops showing movement for 5 days, you'll be eligible to request either a full refund or a free reshipment.\n\nIf you proceed with a refund, approved refunds go back to your original payment method within 5 to 7 business days, and you'll receive an email confirmation.\n\nLet me know if you have any other questions!\n\nBest regards,\nSupport Team",
+      "revision_of": "DRAFT-0003",
+      "status": "awaiting human approval"
+    }
+  ],
+  "help_articles": [
+    {
+      "body": "If a package is more than 7 days past its estimated delivery date, or its tracking has not moved for 5 days, the customer may choose a full refund or a free reshipment. Apologize for the delay. Do not promise a specific new delivery date.",
+      "id": "late-or-lost-package",
+      "title": "Late or lost packages"
+    },
+    {
+      "body": "Approved refunds go back to the original payment method within 5 to 7 business days. The customer gets an email confirmation when the refund is issued.",
+      "id": "refund-timing",
+      "title": "How long refunds take"
+    },
+    {
+      "body": "If an item arrives damaged, the customer may choose a free replacement (a prepaid return label is provided for the damaged item) or a full refund.",
+      "id": "damaged-on-arrival",
+      "title": "Damaged on arrival"
+    }
+  ],
+  "orders": {
+    "ORD-1042": {
+      "eta": "2026-11-07",
+      "item": "wireless earbuds",
+      "last_scan": "2026-11-03, Chicago hub",
+      "ordered": "2026-10-26",
+      "status": "in transit - delayed at the regional hub"
+    },
+    "ORD-2077": {
+      "eta": "2026-10-27",
+      "item": "standing desk mat",
+      "last_scan": "2026-10-27, left at front door",
+      "ordered": "2026-10-20",
+      "status": "delivered"
+    }
+  }
+}

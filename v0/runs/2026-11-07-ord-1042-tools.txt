@@ -1,0 +1,16 @@
+TICKET: MY PACKAGE IS A WEEK LATE AND SUPPORT KEEPS IGNORING ME. THIS IS UNACCEPTABLE. My order is ORD-1042 - where is it??
+STEP 1: model replied (in 1221 / out 79 tokens, stop_reason=tool_use)
+  TOOL CALL: get_order_status({"order_id": "ORD-1042"})
+  TOOL RESULT: {"order_id": "ORD-1042", "eta": "2026-11-07", "item": "wireless earbuds", "last_scan": "2026-11-03, Chicago hub", "ordered": "2026-10-26", "status": "in transit - delayed at the regional hub"}
+STEP 2: model replied (in 1385 / out 70 tokens, stop_reason=tool_use)
+  TOOL CALL: search_help_center({"query": "late package delayed delivery"})
+  TOOL RESULT: {"articles": [{"body": "If a package is more than 7 days past its estimated delivery date, or its tracking has not moved for 5 days, the customer may choose a full refund or a free reshipment. Apologize for the delay. Do not promise a specific new delivery date.", "id": "late-or-lost-package", "title": "Late or lost packages"}]}
+STEP 3: model replied (in 1556 / out 305 tokens, stop_reason=tool_use)
+  TOOL CALL: create_draft_reply({"ticket_ref": "ORD-1042", "draft_text": "Thank you for your patience, and I sincerely apologize for the frustration you're experiencing with your order.\n\nI've looked up your order ORD-1042 (wireless earbuds, ordered October 26th) and can confirm it is currently in transit but delayed at the regional hub in Chicago. The last tracking scan was on November 3rd. Your estimated delivery date is November 7th.\n\nI understand how frustrating it is when a package doesn't arrive as expected. I want to make this right for you.\n\nAccording to our policy, if a package is more than 7 days past its estimated delivery date or if tracking hasn't moved for 5 days, you have the option to choose either a full refund or a free reshipment of your order.\n\nPlease let me know which option you'd prefer\u2014a refund or reshipment\u2014and I'll process it for you right away.\n\nAgain, I apologize for this delay and for any frustration our support team may have caused."})
+  TOOL RESULT: {"draft_id": "DRAFT-0001", "status": "awaiting human approval", "note": "Draft saved. It has NOT been sent - a human approves every reply before sending."}
+STEP 4: model replied (in 1916 / out 38 tokens, stop_reason=end_turn)
+BRAKE: cost budget (6000 tokens) exceeded at step 4. Escalating.
+RUN TOTALS: 6078 in / 492 out tokens (6570 of 6000 budget), est. $0.0085, 6.6s elapsed
+
+----- RESULT (drafts need human approval before any send) -----
+(escalated to a human - cost-budget brake fired)

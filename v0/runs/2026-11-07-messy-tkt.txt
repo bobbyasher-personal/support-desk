@@ -1,0 +1,10 @@
+TICKET: WHERE IS MY PACKAGE?? Ticket TKT-1042. Nobody is helping me and I want answers NOW.
+STEP 1: model replied (in 1205 / out 98 tokens, stop_reason=end_turn)
+DONE: model named no tool - draft written but never saved. Running the reflection pass.
+REFLECT: draft PASSED the checklist unchanged.
+RUN TOTALS: 1565 in / 103 out tokens (1668 of 10000 budget), est. $0.0021, 2.4s elapsed
+
+----- RESULT (drafts need human approval before any send) -----
+I need to look up the order status to help you. However, I notice you've provided a ticket number (TKT-1042) but not an order ID. Let me search the help center for guidance on package tracking and late deliveries while you provide the order ID.
+
+Could you please provide your **order ID** (it should be in the format ORD-#### )? This will allow me to check the current status of your package.

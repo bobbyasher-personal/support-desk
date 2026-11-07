@@ -1,0 +1,25 @@
+TICKET: MY PACKAGE IS A WEEK LATE AND SUPPORT KEEPS IGNORING ME. THIS IS UNACCEPTABLE. My order is ORD-1042 - where is it??
+STEP 1: model replied (in 1221 / out 121 tokens, stop_reason=tool_use)
+  TOOL CALL: get_order_status({"order_id": "ORD-1042"})
+  TOOL RESULT: {"order_id": "ORD-1042", "eta": "2026-11-07", "item": "wireless earbuds", "last_scan": "2026-11-03, Chicago hub", "ordered": "2026-10-26", "status": "in transit - delayed at the regional hub"}
+  TOOL CALL: search_help_center({"query": "late package delayed delivery"})
+  TOOL RESULT: {"articles": [{"body": "If a package is more than 7 days past its estimated delivery date, or its tracking has not moved for 5 days, the customer may choose a full refund or a free reshipment. Apologize for the delay. Do not promise a specific new delivery date.", "id": "late-or-lost-package", "title": "Late or lost packages"}]}
+STEP 2: model replied (in 1571 / out 283 tokens, stop_reason=tool_use)
+  TOOL CALL: create_draft_reply({"ticket_ref": "ticket about ORD-1042", "draft_text": "Thank you for reaching out, and I sincerely apologize for the frustration with your order.\n\nI've checked the status of your order ORD-1042 (wireless earbuds). Your package is currently in transit but has been delayed at the regional hub in Chicago. The last tracking scan was November 3rd, and the current estimated delivery date is November 7th.\n\nI understand this delay is unacceptable, and we take this seriously. Since your package is experiencing a delay, you have options:\n\n1. **Full refund** \u2013 We can process a complete refund of your order\n2. **Free reshipment** \u2013 We can send you a replacement package at no cost\n\nPlease let us know which option you prefer, and we'll get this resolved for you right away. Again, I apologize for the inconvenience and for any previous wait times in getting support."})
+  TOOL RESULT: {"draft_id": "DRAFT-0002", "status": "awaiting human approval", "note": "Draft saved. It has NOT been sent - a human approves every reply before sending."}
+STEP 3: model replied (in 1909 / out 48 tokens, stop_reason=end_turn)
+DONE: model finished - grading the saved draft (DRAFT-0002) in the reflection pass.
+REFLECT: draft PASSED the checklist unchanged.
+RUN TOTALS: 5374 in / 457 out tokens (5831 of 10000 budget), est. $0.0077, 6.4s elapsed
+
+----- RESULT (drafts need human approval before any send) -----
+Thank you for reaching out, and I sincerely apologize for the frustration with your order.
+
+I've checked the status of your order ORD-1042 (wireless earbuds). Your package is currently in transit but has been delayed at the regional hub in Chicago. The last tracking scan was November 3rd, and the current estimated delivery date is November 7th.
+
+I understand this delay is unacceptable, and we take this seriously. Since your package is experiencing a delay, you have options:
+
+1. **Full refund** – We can process a complete refund of your order
+2. **Free reshipment** – We can send you a replacement package at no cost
+
+Please let us know which option you prefer, and we'll get this resolved for you right away. Again, I apologize for the inconvenience and for any previous wait times in getting support.

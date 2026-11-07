@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Support Desk v0 - the bare-hands agent (bites B1 + B2).
+"""Support Desk v0 - the bare-hands agent (bites B1 + B2 + B3).
 
 One file, standard library only, NO framework. The whole agent is the
 while-loop in run_agent():
@@ -9,47 +9,49 @@ while-loop in run_agent():
     -> repeat, until the model says "done", a budget runs out,
        or a brake fires.
 
-B1 built the loop. B2 gives it its shapes and brakes:
-- The loop's shape is ReAct (think one step, act, look, think again),
-  named here so later bites can change it on purpose.
-- Four brakes, checked by the LOOP (not the model - brakes are code,
-  not requests): a step budget, a cost budget (total tokens, with the
-  dollar estimate shown), a no-progress rule (same tool + same inputs
-  twice in a row = stop and escalate, BEFORE the repeat runs - the
-  duplicate never happens), and a time limit.
-- A reflection pass at the end: the finished draft is graded against a
-  checklist by a second model call, and revised once if it fails. This
-  is the seed of the critic agent (S4).
+B1 built the loop. B2 gave it brakes (step / cost / no-progress / time)
+and a reflection pass. B3 gives it real hands: the tools now live in
+their own folders under ../tools/, one per business activity, each with
+a contract (contract.json), code (tool.py) and examples (examples.md).
+THIS FILE READS THE CONTRACTS FROM THOSE FOLDERS - the model's view of
+a tool and the folder's contract are the same document, so they can
+never drift apart. Validation lives in the tool code: garbage in gets
+an agent-readable error back, never a guess and never silence.
 
 The model call is a raw HTTPS POST to the Anthropic Messages API. The API
 key is never in this file: the Muse connector (custom.anthropic) swaps in
 the real credential on the way out, via the surrogate helper.
 
 STUBS, named as stubs (repo rule: real over toy, stubs labelled):
-- get_order_status reads a tiny canned dict below, not a real system of
-  record. Gap to real: B3 turns tools into contract folders over a real
-  local store; S5 serves them over MCP.
+- The system of record is a local JSON file (tools/store.json) read and
+  written by tools/store.py. Gap to real: S6 moves it behind the
+  deployed service; the contracts do not change when it does.
+- search_help_center is a keyword stub behind a real contract. Gap to
+  real: B5 gives it chunking, embeddings, hybrid search and checked
+  citations.
 - The reflection "critic" is the same small model wearing a checklist,
-  not a separate agent. Gap to real: S4's critic is its own agent with
-  its own desk and rubric.
-- The reply this produces is a DRAFT only. There is no send tool in v0,
-  on purpose: sending sits above the approval line (F3) and the approval
-  gate arrives at B4.
+  not a separate agent. Gap to real: S4's critic is its own agent.
+- The reply is still a DRAFT only: create_draft_reply saves it with
+  status "awaiting human approval". There is no send tool, on purpose -
+  the approval gate arrives at B4.
 - `brake-test` mode swaps the model for a scripted fake that always asks
   for the same tool call, so the no-progress brake can be tested
-  deterministically, for free. It tests the brake (loop code), not the
-  model - the standard way to test a guardrail.
+  deterministically, for free.
 
 Run modes:
     python3 agent.py              the B1 ticket (ORD-1042), for real
+    python3 agent.py policy       ORD-1042 + a refund-policy question
+    python3 agent.py messy        a ticket waving a TICKET number as an id
     python3 agent.py not-found    a real ticket with an unknown order id
     python3 agent.py brake-test   the no-progress brake, scripted, no API
 """
 
+import importlib.util
 import json
 import sys
 import time
 import urllib.request
+from pathlib import Path
 
 sys.path.insert(0, "/opt/muse/skills/custom-connector-setup/bin")
 from dynamic_credentials import add_surrogate_to_request, read_json_response
@@ -59,80 +61,56 @@ MODEL = "claude-haiku-4-5-20251001"  # small + cheap on purpose (model-to-task m
 
 # --- The brakes (B2). Numbers the loop enforces; the model cannot move them.
 MAX_STEPS = 6        # step budget: at most this many turns around the loop
-MAX_TOKENS = 6000    # cost budget: total tokens (in + out) for the whole run
+MAX_TOKENS = 10000   # cost budget: total tokens (in + out) for the whole run.
+                     # Was 6,000 at B2 (one-tool desk). Raised at B3 (Nov 7,
+                     # 2026) after a traced run showed the three-tool desk's
+                     # legitimate shape costs ~6,600 tokens before reflection -
+                     # budgets are calibrated to the job's real shape, from
+                     # traces, not raised to silence the alarm.
 MAX_SECONDS = 120    # time limit: wall-clock seconds for the whole run
 # Haiku 4.5 list prices, used only to show the run's dollar estimate.
 INPUT_USD_PER_MTOK = 1.00
 OUTPUT_USD_PER_MTOK = 5.00
 
 # ---------------------------------------------------------------------------
-# The stub system of record: canned orders. "Truth" lives here (F4) - the
-# model is not allowed to state an order fact that did not come from here.
+# The toolbox (B3): one folder per business activity under ../tools/.
+# The contracts the model reads are loaded from the folders' own
+# contract.json files - one source of truth, no drift.
 # ---------------------------------------------------------------------------
-ORDERS = {
-    "ORD-1042": {
-        "item": "wireless earbuds",
-        "status": "in transit - delayed at the regional hub",
-        "ordered": "2026-10-26",
-        "eta": "2026-11-07",
-        "last_scan": "2026-11-03, Chicago hub",
-    },
-    "ORD-2077": {
-        "item": "standing desk mat",
-        "status": "delivered",
-        "ordered": "2026-10-20",
-        "eta": "2026-10-27",
-        "last_scan": "2026-10-27, left at front door",
-    },
-}
+TOOLS_DIR = Path(__file__).resolve().parent.parent / "tools"
+TOOL_NAMES = ["get_order_status", "search_help_center", "create_draft_reply"]
 
 
-def get_order_status(order_id: str) -> str:
-    """The one stub tool: look up an order in the canned store."""
-    order = ORDERS.get(order_id)
-    if order is None:
-        # An error written for the model to read: what went wrong + what to try.
-        return (
-            f"Error: no order found with id '{order_id}'. "
-            "Order ids look like ORD-1234. If the customer gave a different "
-            "kind of number, ask them for the order id on their confirmation email."
-        )
-    return json.dumps({"order_id": order_id, **order})
+def _load_tool_func(name):
+    spec = importlib.util.spec_from_file_location(
+        f"sd_tool_{name}", TOOLS_DIR / name / "tool.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return getattr(module, name)
 
 
-# The tool's contract, in the shape the API expects: name in business words,
-# what it does, and the exact input it takes. (B3 grows this into a full
-# contract folder; this is the seed of it.)
-TOOLS = [
-    {
-        "name": "get_order_status",
-        "description": (
-            "Look up the current status of one customer order. "
-            "Returns the item, status, order date, ETA and last scan, "
-            "or an error if the order id is unknown."
-        ),
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "order_id": {
-                    "type": "string",
-                    "description": "The order id, e.g. ORD-1042",
-                }
-            },
-            "required": ["order_id"],
-        },
-    }
-]
+def _load_contract(name):
+    raw = json.loads((TOOLS_DIR / name / "contract.json").read_text(encoding="utf-8"))
+    # The API gets exactly these three keys; the rest of the file is the
+    # human-facing half of the contract (error catalogue, pointers).
+    return {key: raw[key] for key in ("name", "description", "input_schema")}
+
+
+TOOL_FUNCS = {name: _load_tool_func(name) for name in TOOL_NAMES}
+TOOLS = [_load_contract(name) for name in TOOL_NAMES]
 
 SYSTEM_PROMPT = """You are the agent for Support Desk, a customer support system.
-Your job: take the ticket below and work it to a resolved DRAFT reply.
+Your job: take the ticket below and work it to a resolved, saved DRAFT reply.
 
 Rules:
-- Never invent facts. Order facts may only come from the get_order_status tool.
+- Never invent facts. Order facts may only come from the get_order_status
+  tool. Policy may only come from the search_help_center tool.
 - If the ticket contains an order id, look it up before answering.
-- Your final answer is a draft reply to the customer. A human approves every
-  reply before it is sent; you never send anything yourself.
-- When you have what you need, stop calling tools and write the draft."""
+- Write the reply, then save it with create_draft_reply. Saving is not
+  sending: a human approves every reply before it is sent, and you never
+  send anything yourself.
+- Once the draft is saved, stop and give a one-line summary of what you did."""
 
 # The reflection pass (B2): a second call whose only job is grading the
 # draft against this checklist. Same model, different hat - the seed of
@@ -142,7 +120,8 @@ You are given a customer ticket and a DRAFT reply written by another agent.
 Grade the draft against this checklist:
 1. Every order fact in the draft (item, status, dates, ETA, locations) came
    from the tool results the agent was given - nothing invented, nothing
-   embellished.
+   embellished. Every policy statement matches a help-center article the
+   agent was given.
 2. It answers the customer's actual question.
 3. Tone: calm and helpful; owns the problem where the company is at fault.
 4. It makes no promise the company has not made (no new dates, refunds, or
@@ -239,6 +218,7 @@ def run_agent(ticket: str) -> str:
     total_in = total_out = 0
     last_call_key = None  # the no-progress notebook: the last tool call that ran
     evidence = []  # every tool result, kept for the reflection pass's desk
+    saved_draft = None  # the last draft the agent saved via create_draft_reply
 
     def totals_line():
         cost = (total_in * INPUT_USD_PER_MTOK + total_out * OUTPUT_USD_PER_MTOK) / 1_000_000
@@ -276,14 +256,28 @@ def run_agent(ticket: str) -> str:
 
         tool_calls = [b for b in reply["content"] if b.get("type") == "tool_use"]
         if not tool_calls:
-            # No tool named = the model is done. Its text is the draft -
-            # which then goes through the reflection pass before it
-            # counts as the run's answer.
-            draft = "".join(b.get("text", "") for b in reply["content"] if b.get("type") == "text")
-            log("DONE: model named no tool - draft written. Running the reflection pass.")
+            # No tool named = the model is done. What gets graded is the
+            # SAVED draft if there is one (that is the artifact of
+            # record), else the closing text.
+            closing = "".join(b.get("text", "") for b in reply["content"] if b.get("type") == "text")
+            if saved_draft:
+                draft = saved_draft["text"]
+                log(f"DONE: model finished - grading the saved draft ({saved_draft['id']}) in the reflection pass.")
+            else:
+                draft = closing
+                log("DONE: model named no tool - draft written but never saved. Running the reflection pass.")
             draft, r_in, r_out = reflect_on_draft(ticket, draft, evidence, log)
             total_in += r_in
             total_out += r_out
+            if saved_draft and draft != saved_draft["text"]:
+                # The reflection pass revised a saved draft: persist the
+                # revision through the same tool, as a new version.
+                out = TOOL_FUNCS["create_draft_reply"](
+                    ticket_ref=saved_draft["ticket_ref"],
+                    draft_text=draft,
+                    revision_of=saved_draft["id"],
+                )
+                log(f"REFLECT-SAVE: revision persisted via create_draft_reply -> {out}")
             log(totals_line())
             return draft
 
@@ -306,12 +300,27 @@ def run_agent(ticket: str) -> str:
                     f"tried to call {call['name']} twice in a row with identical inputs)"
                 )
             log(f"  TOOL CALL: {call['name']}({json.dumps(call['input'])})")
-            if call["name"] == "get_order_status":
-                result = get_order_status(call["input"].get("order_id", ""))
-            else:
+            func = TOOL_FUNCS.get(call["name"])
+            if func is None:
                 result = f"Error: unknown tool '{call['name']}'."
+            else:
+                try:
+                    result = func(**call["input"])
+                except TypeError as exc:
+                    # The call's shape broke the contract itself: say so
+                    # in words the model can act on.
+                    result = (
+                        f"Error: that call did not match the {call['name']} contract ({exc}). "
+                        "Check the contract for the exact inputs this tool takes, then try again."
+                    )
             last_call_key = call_key
             evidence.append(result)
+            if call["name"] == "create_draft_reply" and '"draft_id"' in result:
+                saved_draft = {
+                    "id": json.loads(result)["draft_id"],
+                    "text": call["input"].get("draft_text", ""),
+                    "ticket_ref": call["input"].get("ticket_ref", ""),
+                }
             log(f"  TOOL RESULT: {result}")
             results.append(
                 {"type": "tool_result", "tool_use_id": call["id"], "content": result}
@@ -351,6 +360,18 @@ if __name__ == "__main__":
         ticket = (
             "Hi, my order ORD-9999 was supposed to arrive two weeks ago "
             "and there's still nothing. Can you check where it is?"
+        )
+    elif mode == "policy":
+        ticket = (
+            "My order ORD-1042 is a week late - where is it? And if it "
+            "never turns up, what happens? Do I get my money back?"
+        )
+    elif mode == "messy":
+        # Grown from the messy end of the golden set: all-caps anger, and
+        # the only number offered is a TICKET number, not an order id.
+        ticket = (
+            "WHERE IS MY PACKAGE?? Ticket TKT-1042. Nobody is helping me "
+            "and I want answers NOW."
         )
     else:
         # A messy ticket grown from golden-set t11 (all-caps, a week late)
