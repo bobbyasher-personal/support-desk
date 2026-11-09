@@ -27,6 +27,13 @@
       "draft_text": "Hi,\n\nThanks for reaching out. I've looked up your order ORD-1042 (wireless earbuds). Here's what I found:\n\n**Current Status:**\nYour order is in transit and currently delayed at the regional hub in Chicago. It was last scanned on November 3, 2026, and the estimated delivery date is November 7, 2026.\n\n**About your refund question:**\nI sincerely apologize for the delay on your order. According to our policy, if a package is more than 7 days past its estimated delivery date, or if tracking hasn't moved for 5 days, you have the option to choose either a full refund or a free reshipment.\n\nSince your order is still actively moving through our system, I'd recommend waiting to see if it arrives by November 7th. However, if it doesn't arrive by that date or if tracking stops showing movement for 5 days, you'll be eligible to request either a full refund or a free reshipment.\n\nIf you proceed with a refund, approved refunds go back to your original payment method within 5 to 7 business days, and you'll receive an email confirmation.\n\nLet me know if you have any other questions!\n\nBest regards,\nSupport Team",
       "revision_of": "DRAFT-0003",
       "status": "awaiting human approval"
+    },
+    {
+      "draft_id": "DRAFT-0005",
+      "ticket_ref": "ORD-2077",
+      "draft_text": "Thank you for contacting us, and I'm sorry to hear your desk mat arrived with a permanent curl that makes it unusable.\n\nI've submitted a full refund of $44.99 for your order ORD-2077. Your refund is now awaiting approval and will be processed to your original payment method. You should see the refund within 5 to 7 business days, and you'll receive an email confirmation once it's been issued.\n\nThank you for your patience, and please let us know if there's anything else we can help with.",
+      "revision_of": null,
+      "status": "awaiting human approval"
     }
   ],
   "help_articles": [
@@ -61,7 +68,31 @@
       "last_scan": "2026-10-27, left at front door",
       "ordered": "2026-10-20",
       "price": 44.99,
-      "status": "delivered"
+      "status": "refunded"
     }
-  }
+  },
+  "pending_actions": [
+    {
+      "action_id": "PEND-0001",
+      "type": "refund",
+      "order_id": "ORD-2077",
+      "item": "standing desk mat",
+      "amount": 44.99,
+      "order_status_now": "delivered",
+      "reason": "item arrived damaged - permanent curl, unusable",
+      "status": "executed",
+      "approved_by": "bobby",
+      "refund_id": "REF-0001"
+    }
+  ],
+  "refunds": [
+    {
+      "refund_id": "REF-0001",
+      "order_id": "ORD-2077",
+      "amount": 44.99,
+      "reason": "item arrived damaged - permanent curl, unusable",
+      "approved_by": "bobby",
+      "status": "issued"
+    }
+  ]
 }

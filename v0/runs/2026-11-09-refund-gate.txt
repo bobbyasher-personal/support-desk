@@ -1,0 +1,23 @@
+TICKET: The desk mat from my order ORD-2077 arrived with a bad curl in it that won't flatten out - it's unusable. I don't want a replacement, I want my money back please.
+STEP 1: model replied (in 1659 / out 135 tokens, stop_reason=tool_use)
+  TOOL CALL: get_order_status({"order_id": "ORD-2077"})
+  TOOL RESULT: {"order_id": "ORD-2077", "eta": "2026-10-27", "item": "standing desk mat", "last_scan": "2026-10-27, left at front door", "ordered": "2026-10-20", "price": 44.99, "status": "delivered"}
+  TOOL CALL: search_help_center({"query": "refund for damaged item"})
+  TOOL RESULT: {"articles": [{"body": "If an item arrives damaged, the customer may choose a free replacement (a prepaid return label is provided for the damaged item) or a full refund.", "id": "damaged-on-arrival", "title": "Damaged on arrival"}, {"body": "If a package is more than 7 days past its estimated delivery date, or its tracking has not moved for 5 days, the customer may choose a full refund or a free reshipment. Apologize for the delay. Do not promise a specific new delivery date.", "id": "late-or-lost-package", "title": "Late or lost packages"}, {"body": "Approved refunds go back to the original payment method within 5 to 7 business days. The customer gets an email confirmation when the refund is issued.", "id": "refund-timing", "title": "How long refunds take"}]}
+STEP 2: model replied (in 2140 / out 172 tokens, stop_reason=tool_use)
+  TOOL CALL: issue_refund({"order_id": "ORD-2077", "reason": "item arrived damaged - permanent curl, unusable", "preview": true})
+  TOOL RESULT: {"mode": "preview", "would_refund": {"order_id": "ORD-2077", "item": "standing desk mat", "amount": 44.99, "order_status_now": "delivered", "reason": "item arrived damaged - permanent curl, unusable"}, "note": "PREVIEW ONLY - nothing has changed: no refund, no pending action. To proceed, call this tool again with preview=false to submit the refund to the approval gate."}
+  PREVIEW: the tool showed what would happen - nothing was changed.
+STEP 3: model replied (in 2432 / out 116 tokens, stop_reason=tool_use)
+  TOOL CALL: issue_refund({"order_id": "ORD-2077", "reason": "item arrived damaged - permanent curl, unusable", "preview": false})
+  TOOL RESULT: {"pending_action_id": "PEND-0001", "status": "awaiting approval", "would_refund": {"order_id": "ORD-2077", "item": "standing desk mat", "amount": 44.99, "order_status_now": "delivered", "reason": "item arrived damaged - permanent curl, unusable"}, "note": "Submitted to the approval gate. The refund has NOT been issued - a human must approve this pending action first, and only the read-back receipt after approval proves it happened."}
+  GATE: the write is submitted, not executed - it waits for a human approver, outside this loop.
+STEP 4: model replied (in 2684 / out 214 tokens, stop_reason=tool_use)
+  TOOL CALL: create_draft_reply({"ticket_ref": "ORD-2077", "draft_text": "Thank you for contacting us, and I'm sorry to hear your desk mat arrived with a permanent curl that makes it unusable.\n\nI've submitted a full refund of $44.99 for your order ORD-2077. Your refund is now awaiting approval and will be processed to your original payment method. You should see the refund within 5 to 7 business days, and you'll receive an email confirmation once it's been issued.\n\nThank you for your patience, and please let us know if there's anything else we can help with."})
+  TOOL RESULT: {"draft_id": "DRAFT-0005", "status": "awaiting human approval", "note": "Draft saved. It has NOT been sent - a human approves every reply before sending."}
+STEP 5: model replied (in 2953 / out 88 tokens, stop_reason=end_turn)
+BRAKE: cost budget (10000 tokens) exceeded at step 5. Escalating.
+RUN TOTALS: 11868 in / 725 out tokens (12593 of 10000 budget), est. $0.0155, 10.2s elapsed
+
+----- RESULT (drafts need human approval before any send) -----
+(escalated to a human - cost-budget brake fired)

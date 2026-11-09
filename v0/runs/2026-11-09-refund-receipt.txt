@@ -1,0 +1,4 @@
+GATE: PEND-0001 is 'awaiting approval': refund $44.99 for ORD-2077 (item arrived damaged - permanent curl, unusable), submitted by the agent.
+APPROVED by bobby - executed.
+RECEIPT (read back from the store): refund {"refund_id": "REF-0001", "order_id": "ORD-2077", "amount": 44.99, "reason": "item arrived damaged - permanent curl, unusable", "approved_by": "bobby", "status": "issued"}
+RECEIPT (read back from the store): order ORD-2077 status is now 'refunded'
