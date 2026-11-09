@@ -34,6 +34,13 @@
       "draft_text": "Thank you for contacting us, and I'm sorry to hear your desk mat arrived with a permanent curl that makes it unusable.\n\nI've submitted a full refund of $44.99 for your order ORD-2077. Your refund is now awaiting approval and will be processed to your original payment method. You should see the refund within 5 to 7 business days, and you'll receive an email confirmation once it's been issued.\n\nThank you for your patience, and please let us know if there's anything else we can help with.",
       "revision_of": null,
       "status": "awaiting human approval"
+    },
+    {
+      "draft_id": "DRAFT-0006",
+      "ticket_ref": "ticket about ORD-1042",
+      "draft_text": "Hi,\n\nThank you for contacting us about your order ORD-1042 (wireless earbuds, $59.99).\n\nYour order is currently in transit and delayed at our regional hub in Chicago. The last tracking scan was on November 3rd, 2026. Your estimated delivery date is November 7th, 2026.\n\nRegarding your concern about a refund: if a package is more than 7 days past its estimated delivery date, or if tracking has not moved for 5 days, you have the option to choose either a full refund or a free reshipment.\n\nWe sincerely apologize for the delay. Please let us know if you'd like to proceed with a refund or reshipment, or if you have any other questions. We're here to help.\n\nBest regards,\nSupport Team",
+      "revision_of": null,
+      "status": "awaiting human approval"
     }
   ],
   "help_articles": [

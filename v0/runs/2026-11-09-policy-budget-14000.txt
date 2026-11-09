@@ -1,0 +1,27 @@
+TICKET: My order ORD-1042 is a week late - where is it? And if it never turns up, what happens? Do I get my money back?
+STEP 1: model replied (in 1649 / out 128 tokens, stop_reason=tool_use)
+  TOOL CALL: get_order_status({"order_id": "ORD-1042"})
+  TOOL RESULT: {"order_id": "ORD-1042", "eta": "2026-11-07", "item": "wireless earbuds", "last_scan": "2026-11-03, Chicago hub", "ordered": "2026-10-26", "price": 59.99, "status": "in transit - delayed at the regional hub"}
+  TOOL CALL: search_help_center({"query": "refund for lost package that never arrived"})
+  TOOL RESULT: {"articles": [{"body": "If a package is more than 7 days past its estimated delivery date, or its tracking has not moved for 5 days, the customer may choose a full refund or a free reshipment. Apologize for the delay. Do not promise a specific new delivery date.", "id": "late-or-lost-package", "title": "Late or lost packages"}, {"body": "If an item arrives damaged, the customer may choose a free replacement (a prepaid return label is provided for the damaged item) or a full refund.", "id": "damaged-on-arrival", "title": "Damaged on arrival"}, {"body": "Approved refunds go back to the original payment method within 5 to 7 business days. The customer gets an email confirmation when the refund is issued.", "id": "refund-timing", "title": "How long refunds take"}]}
+STEP 2: model replied (in 2129 / out 278 tokens, stop_reason=tool_use)
+  TOOL CALL: create_draft_reply({"ticket_ref": "ticket about ORD-1042", "draft_text": "Hi,\n\nThank you for contacting us about your order ORD-1042 (wireless earbuds, $59.99).\n\nYour order is currently in transit and delayed at our regional hub in Chicago. The last tracking scan was on November 3rd, 2026. Your estimated delivery date is November 7th, 2026.\n\nRegarding your concern about a refund: if a package is more than 7 days past its estimated delivery date, or if tracking has not moved for 5 days, you have the option to choose either a full refund or a free reshipment.\n\nWe sincerely apologize for the delay. Please let us know if you'd like to proceed with a refund or reshipment, or if you have any other questions. We're here to help.\n\nBest regards,\nSupport Team"})
+  TOOL RESULT: {"draft_id": "DRAFT-0006", "status": "awaiting human approval", "note": "Draft saved. It has NOT been sent - a human approves every reply before sending."}
+STEP 3: model replied (in 2462 / out 82 tokens, stop_reason=end_turn)
+DONE: model finished - grading the saved draft (DRAFT-0006) in the reflection pass.
+REFLECT: draft PASSED the checklist unchanged.
+RUN TOTALS: 7020 in / 493 out tokens (7513 of 14000 budget), est. $0.0095, 7.7s elapsed
+
+----- RESULT (drafts need human approval before any send) -----
+Hi,
+
+Thank you for contacting us about your order ORD-1042 (wireless earbuds, $59.99).
+
+Your order is currently in transit and delayed at our regional hub in Chicago. The last tracking scan was on November 3rd, 2026. Your estimated delivery date is November 7th, 2026.
+
+Regarding your concern about a refund: if a package is more than 7 days past its estimated delivery date, or if tracking has not moved for 5 days, you have the option to choose either a full refund or a free reshipment.
+
+We sincerely apologize for the delay. Please let us know if you'd like to proceed with a refund or reshipment, or if you have any other questions. We're here to help.
+
+Best regards,
+Support Team

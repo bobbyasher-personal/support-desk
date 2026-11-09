@@ -72,12 +72,19 @@ MODEL = "claude-haiku-4-5-20251001"  # small + cheap on purpose (model-to-task m
 
 # --- The brakes (B2). Numbers the loop enforces; the model cannot move them.
 MAX_STEPS = 6        # step budget: at most this many turns around the loop
-MAX_TOKENS = 10000   # cost budget: total tokens (in + out) for the whole run.
+MAX_TOKENS = 14000   # cost budget: total tokens (in + out) for the whole run.
                      # Was 6,000 at B2 (one-tool desk). Raised at B3 (Nov 7,
                      # 2026) after a traced run showed the three-tool desk's
                      # legitimate shape costs ~6,600 tokens before reflection -
                      # budgets are calibrated to the job's real shape, from
                      # traces, not raised to silence the alarm.
+                     # Raised again at B4 (Nov 9, 2026, Bobby approved): the
+                     # four-tool desk's refund run - lookup, policy search,
+                     # preview, gate submit, draft - cost 12,593 tokens and
+                     # the brake fired at the final step, skipping the
+                     # reflection pass. 14,000 fits that shape with headroom;
+                     # if a future bite's traced shape outgrows it, recalibrate
+                     # from the trace again, with Bobby's say-so.
 MAX_SECONDS = 120    # time limit: wall-clock seconds for the whole run
 # Haiku 4.5 list prices, used only to show the run's dollar estimate.
 INPUT_USD_PER_MTOK = 1.00

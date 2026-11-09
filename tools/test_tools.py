@@ -95,6 +95,11 @@ store_mod.save_store(data)
 import json as _json
 
 _store_snapshot = store_mod.STORE_PATH.read_text(encoding="utf-8")
+# Guarantee the restore even if a check below crashes: without this, a
+# failed run leaves its throwaway order and pending actions behind in
+# the live store (bit Nov 9, 2026, once real refund history existed).
+import atexit as _atexit
+_atexit.register(lambda: store_mod.STORE_PATH.write_text(_store_snapshot, encoding="utf-8"))
 _data = store_mod.load_store()
 _data["orders"]["ORD-0000"] = {
     "eta": "2026-10-27",
@@ -106,12 +111,18 @@ _data["orders"]["ORD-0000"] = {
 }
 store_mod.save_store(_data)
 
+# History-independent: the store may already hold real pending actions
+# and refunds from live runs, so compare counts, never absolute emptiness.
+_before = store_mod.load_store()
+_n_pending_before = len(_before.get("pending_actions", []))
+_n_refunds_before = len(_before.get("refunds", []))
 out = issue_refund("ORD-0000", "item arrived damaged", preview=True)
 _state = store_mod.load_store()
 check(
     "preview shows the refund and changes NOTHING",
     '"mode": "preview"' in out and '"amount": 10.0' in out
-    and not _state.get("pending_actions") and not _state.get("refunds"),
+    and len(_state.get("pending_actions", [])) == _n_pending_before
+    and len(_state.get("refunds", [])) == _n_refunds_before,
     out,
 )
 
@@ -132,18 +143,18 @@ out = issue_refund("ORD-0000", "")
 check("refund: empty reason -> error", out.startswith("Error: a reason is required"), out)
 
 out = issue_refund("ORD-0000", "item arrived damaged", preview=False)
+_action_id = _json.loads(out)["pending_action_id"]
 _state = store_mod.load_store()
-_pending = _state.get("pending_actions", [])
+_mine = [p for p in _state.get("pending_actions", []) if p["action_id"] == _action_id]
 check(
     "gate: the real call creates a pending action and NO refund",
-    '"pending_action_id"' in out and len(_pending) == 1
-    and _pending[0]["status"] == "awaiting approval"
-    and not _state.get("refunds")
+    len(_mine) == 1
+    and _mine[0]["status"] == "awaiting approval"
+    and len(_state.get("refunds", [])) == _n_refunds_before
     and _state["orders"]["ORD-0000"]["status"] == "delivered",
     out,
 )
 
-_action_id = _pending[0]["action_id"]
 _done = store_mod.approve_and_execute(_action_id, "contract-test")
 _state = store_mod.load_store()
 check(
