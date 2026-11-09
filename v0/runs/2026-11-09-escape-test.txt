@@ -1,0 +1,4 @@
+ESCAPE ATTEMPT REFUSED: refused: '~/.ssh/id_ed25519' resolves to /home/hatch/.ssh/id_ed25519, which is outside the sandbox (/home/hatch/workspace/agent-engineering/support-desk). Tools may only touch files inside the sandbox.
+ESCAPE ATTEMPT REFUSED: refused: '/etc/passwd' resolves to /etc/passwd, which is outside the sandbox (/home/hatch/workspace/agent-engineering/support-desk). Tools may only touch files inside the sandbox.
+CONTROL: tools/store.json resolves inside the sandbox (/home/hatch/workspace/agent-engineering/support-desk/tools/store.json) - allowed, as it should be.
+SANDBOX: boundary held - the tools can only touch files inside the sandbox.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Support Desk v0 - the bare-hands agent (bites B1 + B2 + B3).
+"""Support Desk v0 - the bare-hands agent (bites B1 + B2 + B3 + B4).
 
 One file, standard library only, NO framework. The whole agent is the
 while-loop in run_agent():
@@ -32,8 +32,12 @@ STUBS, named as stubs (repo rule: real over toy, stubs labelled):
 - The reflection "critic" is the same small model wearing a checklist,
   not a separate agent. Gap to real: S4's critic is its own agent.
 - The reply is still a DRAFT only: create_draft_reply saves it with
-  status "awaiting human approval". There is no send tool, on purpose -
-  the approval gate arrives at B4.
+  status "awaiting human approval". There is still no send tool, on
+  purpose. B4 builds the trust layer where it belongs - on WRITES:
+  issue_refund previews first, then only SUBMITS a pending action; a
+  human approves it out-of-band (the `approve` mode below) and the
+  store read-back is the receipt. Every file the tools touch passes
+  the sandbox guard (tools/sandbox.py) - see `escape-test` mode.
 - `brake-test` mode swaps the model for a scripted fake that always asks
   for the same tool call, so the no-progress brake can be tested
   deterministically, for free.
@@ -44,6 +48,13 @@ Run modes:
     python3 agent.py messy        a ticket waving a TICKET number as an id
     python3 agent.py not-found    a real ticket with an unknown order id
     python3 agent.py brake-test   the no-progress brake, scripted, no API
+    python3 agent.py refund       a damaged-item refund ticket (B4)
+    python3 agent.py approve PEND-0001 bobby
+                                  the human side of the gate: approve a
+                                  pending action, execute it, print the
+                                  read-back receipt (B4)
+    python3 agent.py escape-test  two sandbox escape attempts + a control
+                                  (B4)
 """
 
 import importlib.util
@@ -78,7 +89,7 @@ OUTPUT_USD_PER_MTOK = 5.00
 # contract.json files - one source of truth, no drift.
 # ---------------------------------------------------------------------------
 TOOLS_DIR = Path(__file__).resolve().parent.parent / "tools"
-TOOL_NAMES = ["get_order_status", "search_help_center", "create_draft_reply"]
+TOOL_NAMES = ["get_order_status", "search_help_center", "create_draft_reply", "issue_refund"]
 
 
 def _load_tool_func(name):
@@ -110,6 +121,11 @@ Rules:
 - Write the reply, then save it with create_draft_reply. Saving is not
   sending: a human approves every reply before it is sent, and you never
   send anything yourself.
+- Refunds: use issue_refund, and always call it with preview=true first.
+  If the refund is right, call it again with preview=false - that SUBMITS
+  it to the approval gate; it does not issue it. Never tell the customer
+  a refund has been issued or completed. Say it has been submitted and
+  is awaiting human approval.
 - Once the draft is saved, stop and give a one-line summary of what you did."""
 
 # The reflection pass (B2): a second call whose only job is grading the
@@ -322,6 +338,10 @@ def run_agent(ticket: str) -> str:
                     "ticket_ref": call["input"].get("ticket_ref", ""),
                 }
             log(f"  TOOL RESULT: {result}")
+            if call["name"] == "issue_refund" and '"mode": "preview"' in result:
+                log("  PREVIEW: the tool showed what would happen - nothing was changed.")
+            if call["name"] == "issue_refund" and '"pending_action_id"' in result:
+                log("  GATE: the write is submitted, not executed - it waits for a human approver, outside this loop.")
             results.append(
                 {"type": "tool_result", "tool_use_id": call["id"], "content": result}
             )
@@ -353,6 +373,59 @@ def fake_model(messages):
 
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "normal"
+    if mode == "approve":
+        # THE HUMAN SIDE OF THE GATE (B4). Not the agent: a person runs
+        # this, out-of-band, after reviewing what the pending action's
+        # preview showed. It executes the write, then reads the store
+        # back - the read-back printed below is the receipt, not the
+        # tool's claim that it worked.
+        sys.path.insert(0, str(TOOLS_DIR))
+        import store as store_mod
+
+        action_id = sys.argv[2]
+        approver = sys.argv[3] if len(sys.argv) > 3 else "bobby"
+        action = store_mod.get_pending_action(action_id)
+        if action is None:
+            print(f"GATE: no pending action '{action_id}' - nothing to approve.")
+            sys.exit(1)
+        print(
+            f"GATE: {action_id} is '{action['status']}': refund "
+            f"${action['amount']:.2f} for {action['order_id']} "
+            f"({action['reason']}), submitted by the agent."
+        )
+        try:
+            done = store_mod.approve_and_execute(action_id, approver)
+        except store_mod.GateError as exc:
+            print(f"GATE REFUSED: {exc}")
+            sys.exit(1)
+        # THE RECEIPT: a fresh read of the store, after the write.
+        refund = store_mod.find_refund_for_order(done["order_id"])
+        order = store_mod.get_order(done["order_id"])
+        print(f"APPROVED by {approver} - executed.")
+        print(f"RECEIPT (read back from the store): refund {json.dumps(refund)}")
+        print(
+            f"RECEIPT (read back from the store): order {done['order_id']} "
+            f"status is now '{order['status']}'"
+        )
+        sys.exit(0)
+    if mode == "escape-test":
+        # THE ESCAPE ATTEMPT (B4): prove the sandbox holds. Two attempts
+        # to reach files outside the sandbox, plus one legitimate path
+        # as the control - a boundary that refuses everything would be
+        # as broken as one that refuses nothing.
+        sys.path.insert(0, str(TOOLS_DIR))
+        import sandbox
+
+        for attempt in ("~/.ssh/id_ed25519", "/etc/passwd"):
+            try:
+                sandbox.inside(attempt)
+                print(f"ESCAPE: {attempt} was ALLOWED - the sandbox FAILED")
+            except sandbox.SandboxError as exc:
+                print(f"ESCAPE ATTEMPT REFUSED: {exc}")
+        ok = sandbox.inside("tools/store.json")
+        print(f"CONTROL: tools/store.json resolves inside the sandbox ({ok}) - allowed, as it should be.")
+        print("SANDBOX: boundary held - the tools can only touch files inside the sandbox.")
+        sys.exit(0)
     if mode == "brake-test":
         call_model = fake_model  # the brake is loop code; test it with a fake brain
         ticket = "Where is my order ORD-1042?"
@@ -372,6 +445,15 @@ if __name__ == "__main__":
         ticket = (
             "WHERE IS MY PACKAGE?? Ticket TKT-1042. Nobody is helping me "
             "and I want answers NOW."
+        )
+    elif mode == "refund":
+        # The B4 ticket: delivered, damaged, customer wants money back -
+        # the ticket that walks the whole trust layer: preview, gate,
+        # (human approval out-of-band), receipt.
+        ticket = (
+            "The desk mat from my order ORD-2077 arrived with a bad curl "
+            "in it that won't flatten out - it's unusable. I don't want a "
+            "replacement, I want my money back please."
         )
     else:
         # A messy ticket grown from golden-set t11 (all-caps, a week late)
