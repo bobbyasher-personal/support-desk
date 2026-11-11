@@ -462,6 +462,15 @@ if __name__ == "__main__":
             "in it that won't flatten out - it's unusable. I don't want a "
             "replacement, I want my money back please."
         )
+    elif mode == "refund-timing":
+        # The B5 ticket: the order record says the refund was issued
+        # (B4's live run), but WHEN the money lands lives only in the
+        # policy corpus - the agent must fetch the refund-timing chunk
+        # and answer from it, with its citation there to be checked.
+        ticket = (
+            "Hi, my refund for order ORD-2077 was approved and issued - "
+            "how long until the money shows up in my account?"
+        )
     else:
         # A messy ticket grown from golden-set t11 (all-caps, a week late)
         # with the order question from t04 - real tickets arrive like this.

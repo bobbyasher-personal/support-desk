@@ -176,6 +176,66 @@ check("second refund on a refunded order -> error naming the refund", "already h
 
 store_mod.STORE_PATH.write_text(_store_snapshot, encoding="utf-8")
 
+# --- retrieval + checked citations (B5) -------------------------------------
+import importlib.util as _ilu
+
+_rspec = _ilu.spec_from_file_location(
+    "retrieval", TOOLS_DIR / "search_help_center" / "retrieval.py"
+)
+retrieval = _ilu.module_from_spec(_rspec)
+_rspec.loader.exec_module(retrieval)
+
+out = search_help_center("how long does a refund take")
+check(
+    "retrieval: the refund-timing chunk leads, with the 5-to-7 fact and a citation id",
+    "refund-timing/c1" in out and "5 to 7 business days" in out,
+    out,
+)
+
+out = search_help_center("my package is really late")
+check(
+    "retrieval: a paraphrase finds the late-package policy",
+    "Late or lost packages" in out,
+    out,
+)
+
+out = search_help_center("can I swap this for a different size")
+check(
+    "retrieval: the exchanges chunk answers a swap question",
+    "exchanges/c1" in out,
+    out,
+)
+
+_v = retrieval.check_claim("Refunds take 5 to 7 business days", "refund-timing/c1")
+check("checker: a true claim with its citation passes", _v["ok"], _v["message"])
+
+_v = retrieval.check_claim("Refunds take 3 to 5 business days", "refund-timing/c1")
+check(
+    "checker: a number the chunk does not contain fails, naming the number",
+    not _v["ok"] and "3" in _v["message"],
+    _v["message"],
+)
+
+_v = retrieval.check_claim("Refunds take 5 to 7 business days")
+check(
+    "checker: an uncited claim fails",
+    not _v["ok"] and "no citation" in _v["message"],
+    _v["message"],
+)
+
+_v = retrieval.check_claim("Refunds take 5 to 7 business days", "damaged-on-arrival/c1")
+check("checker: a claim cited to the wrong chunk fails", not _v["ok"], _v["message"])
+
+_v = retrieval.check_claim(
+    "You'll also receive an email confirmation when the refund is issued",
+    "refund-timing/c2",
+)
+check(
+    "checker: a true claim in the draft's own words passes (no contraction false positive)",
+    _v["ok"],
+    _v["message"],
+)
+
 # --- the sandbox (B4) ---------------------------------------------------------
 try:
     sandbox_mod.inside("tools/store.json")

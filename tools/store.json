@@ -41,6 +41,20 @@
       "draft_text": "Hi,\n\nThank you for contacting us about your order ORD-1042 (wireless earbuds, $59.99).\n\nYour order is currently in transit and delayed at our regional hub in Chicago. The last tracking scan was on November 3rd, 2026. Your estimated delivery date is November 7th, 2026.\n\nRegarding your concern about a refund: if a package is more than 7 days past its estimated delivery date, or if tracking has not moved for 5 days, you have the option to choose either a full refund or a free reshipment.\n\nWe sincerely apologize for the delay. Please let us know if you'd like to proceed with a refund or reshipment, or if you have any other questions. We're here to help.\n\nBest regards,\nSupport Team",
       "revision_of": null,
       "status": "awaiting human approval"
+    },
+    {
+      "draft_id": "DRAFT-0007",
+      "ticket_ref": "ticket about ORD-2077",
+      "draft_text": "Hi there,\n\nThank you for reaching out! I can confirm that your refund for order ORD-2077 (standing desk mat, $44.99) has been processed.\n\nAccording to our refund policy, approved refunds go back to the original payment method within 5 to 7 business days. You should see the money appear in your account within that timeframe. You'll also receive an email confirmation when the refund is issued.\n\nIf you don't see the refund within 7 business days, please reach out again and we'll be happy to help investigate further.\n\nBest regards,\nSupport Desk",
+      "revision_of": null,
+      "status": "awaiting human approval"
+    },
+    {
+      "draft_id": "DRAFT-0008",
+      "ticket_ref": "ticket about ORD-2077",
+      "draft_text": "Hi there,\n\nThank you for reaching out! I can confirm that your refund for order ORD-2077 (standing desk mat, $44.99) has been processed.\n\nAccording to our refund policy, approved refunds go back to the original payment method within 5 to 7 business days [refund-timing/c1]. You should see the money appear in your account within that timeframe. You'll also receive an email confirmation when the refund is issued [refund-timing/c2].\n\nIf you don't see the refund within 7 business days, please reach out again and we'll be happy to help investigate further.\n\nBest regards,\nSupport Desk",
+      "revision_of": "DRAFT-0007",
+      "status": "awaiting human approval"
     }
   ],
   "help_articles": [

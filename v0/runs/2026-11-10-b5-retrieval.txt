@@ -1,0 +1,41 @@
+B5 RETRIEVAL TRACE - 2026-11-10 (no model; the library run itself)
+Corpus: 5 documents, 11 chunks, index written to index.json
+
+Q: how long does a refund take
+   -> refund-timing/c1 score=0.762 by=keyword+meaning
+      "Approved refunds go back to the original payment method within 5 to 7 business days."
+   -> refund-timing/c2 score=0.754 by=keyword+meaning
+      "The customer gets an email confirmation when the refund is issued."
+   -> warranty/c2 score=0.212 by=keyword+meaning
+      "The customer may choose a free repair, a free replacement, or a full refund."
+
+Q: refund for a package that never arrived
+   -> late-or-lost-package/c1 score=0.623 by=keyword+meaning
+      "If a package is more than 7 days past its estimated delivery date, or its tracking has not moved for 5 days, the customer may choose a full refund or a free reshipment."
+   -> refund-timing/c1 score=0.324 by=keyword+meaning
+      "Approved refunds go back to the original payment method within 5 to 7 business days."
+   -> late-or-lost-package/c2 score=0.309 by=keyword+meaning
+      "Apologize for the delay. Do not promise a specific new delivery date."
+
+Q: my package is really late
+   -> late-or-lost-package/c1 score=0.707 by=keyword+meaning
+      "If a package is more than 7 days past its estimated delivery date, or its tracking has not moved for 5 days, the customer may choose a full refund or a free reshipment."
+   -> late-or-lost-package/c2 score=0.639 by=keyword+meaning
+      "Apologize for the delay. Do not promise a specific new delivery date."
+
+Q: can I swap this for a different size
+   -> exchanges/c1 score=0.629 by=keyword+meaning
+      "A customer may exchange an item for a different size or color of the same product within 30 days of delivery. The item must be unused and in its original packaging."
+
+Q: gift wrapping options
+   -> no match - stated, not improvised
+
+CITATION CHECKER (the audit):
+  claim='Refunds take 5 to 7 business days' cite=refund-timing/c1
+   -> PASS: every number and key word in the claim appears in refund-timing/c1. The citation checks out.
+  claim='Refunds take 3 to 5 business days' cite=refund-timing/c1
+   -> FAIL: the claim mentions 3, which does not appear in refund-timing/c1 ("Approved refunds go back to the original payment method within 5 to 7 business days."). A number the chunk does not contain is an invented number.
+  claim='Refunds take 5 to 7 business days' cite=None
+   -> FAIL: no citation. A factual claim must name the chunk it came from (e.g. 'refund-timing/c1') - an uncited claim is an invented one until it cites.
+  claim='Refunds take 5 to 7 business days' cite=damaged-on-arrival/c1
+   -> FAIL: the claim mentions 5, 7, which does not appear in damaged-on-arrival/c1 ("If an item arrives damaged, the customer may choose a free replacement (a prepaid return label is provided for the damaged item) or a full refund."). A number the chunk does not contain is an invented number.

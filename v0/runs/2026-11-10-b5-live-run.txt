@@ -1,0 +1,57 @@
+TICKET: Hi, my refund for order ORD-2077 was approved and issued - how long until the money shows up in my account?
+STEP 1: model replied (in 1644 / out 76 tokens, stop_reason=tool_use)
+  TOOL CALL: get_order_status({"order_id": "ORD-2077"})
+  TOOL RESULT: {"order_id": "ORD-2077", "eta": "2026-10-27", "item": "standing desk mat", "last_scan": "2026-10-27, left at front door", "ordered": "2026-10-20", "price": 44.99, "status": "refunded"}
+STEP 2: model replied (in 1808 / out 82 tokens, stop_reason=tool_use)
+  TOOL CALL: search_help_center({"query": "refund timeline how long money appears account"})
+  TOOL RESULT: {"chunks": [{"chunk_id": "refund-timing/c1", "title": "How long refunds take", "section": "When the refund lands", "text": "Approved refunds go back to the original payment method within 5 to 7 business days.", "score": 0.597, "matched_by": ["keyword", "meaning"]}, {"chunk_id": "warranty/c2", "title": "Warranty", "section": "If a covered defect appears", "text": "The customer may choose a free repair, a free replacement, or a full refund.", "score": 0.589, "matched_by": ["keyword", "meaning"]}, {"chunk_id": "refund-timing/c2", "title": "How long refunds take", "section": "Confirmation", "text": "The customer gets an email confirmation when the refund is issued.", "score": 0.588, "matched_by": ["keyword", "meaning"]}], "note": "State only what these chunks state, and cite the chunk_id for every fact you use - an uncited fact fails the checker."}
+STEP 3: model replied (in 2157 / out 225 tokens, stop_reason=tool_use)
+  TOOL CALL: create_draft_reply({"ticket_ref": "ticket about ORD-2077", "draft_text": "Hi there,\n\nThank you for reaching out! I can confirm that your refund for order ORD-2077 (standing desk mat, $44.99) has been processed.\n\nAccording to our refund policy, approved refunds go back to the original payment method within 5 to 7 business days. You should see the money appear in your account within that timeframe. You'll also receive an email confirmation when the refund is issued.\n\nIf you don't see the refund within 7 business days, please reach out again and we'll be happy to help investigate further.\n\nBest regards,\nSupport Desk"})
+  TOOL RESULT: {"draft_id": "DRAFT-0007", "status": "awaiting human approval", "note": "Draft saved. It has NOT been sent - a human approves every reply before sending."}
+STEP 4: model replied (in 2437 / out 43 tokens, stop_reason=end_turn)
+DONE: model finished - grading the saved draft (DRAFT-0007) in the reflection pass.
+REFLECT: draft FAILED the checklist - revised draft below.
+REFLECT-SAVE: revision persisted via create_draft_reply -> {"draft_id": "DRAFT-0008", "status": "awaiting human approval", "note": "Draft saved. It has NOT been sent - a human approves every reply before sending."}
+RUN TOTALS: 8821 in / 585 out tokens (9406 of 14000 budget), est. $0.0117, 9.2s elapsed
+
+----- RESULT (drafts need human approval before any send) -----
+Hi there,
+
+Thank you for reaching out! I can confirm that your refund for order ORD-2077 (standing desk mat, $44.99) has been processed.
+
+According to our refund policy, approved refunds go back to the original payment method within 5 to 7 business days [refund-timing/c1]. You should see the money appear in your account within that timeframe. You'll also receive an email confirmation when the refund is issued [refund-timing/c2].
+
+If you don't see the refund within 7 business days, please reach out again and we'll be happy to help investigate further.
+
+Best regards,
+Support Desk
+
+----- CITATION AUDIT (after the run): the final draft's claims, checked -----
+
+First pass: claim 1 PASS, claim 3 FAIL (correct), but claim 2 - a TRUE claim -
+FAILED: the checker counted "ll" (from "you'll") and the connective "also"
+as factual words the chunk had to contain. A checker that fails true claims
+teaches the agent to ignore it, so the tokenizer was fixed (contraction
+remnants and pure connectives carry no fact) and the audit re-run. The fix
+is locked in as a regression check in tools/test_tools.py.
+
+claim='approved refunds go back to the original payment method within 5 to 7 business days' cite=refund-timing/c1
+  -> PASS: every number and key word in the claim appears in refund-timing/c1. The citation checks out.
+claim="you'll also receive an email confirmation when the refund is issued" cite=refund-timing/c2
+  -> PASS: every number and key word in the claim appears in refund-timing/c2. The citation checks out.
+claim='Refunds take 3 to 5 business days' cite=refund-timing/c1
+  -> FAIL: the claim mentions 3, which does not appear in refund-timing/c1 ("Approved refunds go back to the original payment method within 5 to 7 business days."). A number the chunk does not contain is an invented number.
+
+Honest findings from this run:
+1. The first draft (DRAFT-0007) carried NO citations; the reflection pass
+   failed it and the revision (DRAFT-0008) added [refund-timing/c1] and
+   [refund-timing/c2]. The citation discipline held - one layer down.
+2. Ranking noise: warranty/c2 scored 0.589 vs the right chunk's 0.597 on
+   the agent's query - word-weight vectors nearly tied an irrelevant
+   chunk with the right one. The model still used the right facts, but
+   this is the named embedding gap, visible in a real trace.
+3. The checker itself shipped a false positive on its first audit (above)
+   - found because the audit ran on a real draft, fixed the same evening.
+4. 'You should see the money appear in your account within that timeframe'
+   echoes B4's DRAFT-0005 softening - but the factual claims themselves
+   are now the chunks' own words, cited, and checker-verified above.
