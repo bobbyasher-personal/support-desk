@@ -1,0 +1,42 @@
+B6 MEASUREMENT - the desk, weighed before changing anything (Nov 11, 2026)
+Source: B5 live run trace v0/runs/2026-11-10-b5-live-run.txt (billed
+tokens are the API's own usage numbers - ground truth) + contract sizes
+measured from the tool folders (chars/4 estimates, marked ~).
+
+PER-STEP DESK SIZE (input tokens billed, B5 refund-timing run):
+  step 1: 1,644   (ticket + system + all 4 contracts, nothing else yet)
+  step 2: 1,808   (+164: the lookup call + its result ride along)
+  step 3: 2,157   (+349: the search result blob joins the desk)
+  step 4: 2,437   (+280: the draft call + save result join too)
+  run total: 8,821 in / 585 out = 9,406 tokens.
+Every step re-bills EVERYTHING before it. Nothing ever leaves the desk.
+
+FIXED OVERHEAD - carried on EVERY step whether used or not (~ tokens):
+  system prompt            ~230
+  get_order_status         ~145
+  search_help_center       ~139
+  create_draft_reply       ~206
+  issue_refund             ~338   <- the biggest contract, offered on
+  all 4 contracts          ~829      every step of a run that never
+  system + contracts      ~1,059     refunds anything
+
+THE THREE ROT MECHANISMS, quantified on this trace:
+1. Dead contracts: ~64% of step 1's desk is system + contracts. The
+   refund-timing ticket needs 2 of the 4 tools; issue_refund (~338)
+   and create_draft_reply (~206) are pure carrying cost until the
+   facts exist - and create_draft_reply is meaningless before them.
+2. The blob that never leaves: step 2's search result is ~2,900 chars
+   (~720 tokens of JSON) and is re-billed on steps 3 and 4 - and a
+   second copy rides into the reflection pass as evidence.
+3. Linear growth: +164/+349/+280 per step on a FOUR-step job. On a
+   15-step job the last step's desk is the sum of all 14 before it -
+   the step-41 failure shape (the needed fact buried, the bill and
+   the confusion both compounding).
+
+THE FIX BEING BUILT (same session): per-step desk-packing (offer only
+the tools this step can still need, chosen from structured job state)
++ compaction (history past ~1,200 est. tokens is replaced by a DESK
+NOTE rebuilt from that same job state - orders, cited chunks,
+decisions, pending actions - so a decision lives in a state field and
+cannot be dropped by a summary). Before/after: the packed re-run of
+this same ticket and the long-run drill, traces alongside this file.

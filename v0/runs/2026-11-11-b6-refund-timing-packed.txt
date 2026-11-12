@@ -1,0 +1,42 @@
+TICKET: Hi, my refund for order ORD-2077 was approved and issued - how long until the money shows up in my account?
+DESK step 1: offering ['get_order_status', 'search_help_center'] (~284 of ~828 contract tokens)
+STEP 1: model replied (in 1078 / out 79 tokens, stop_reason=tool_use)
+  TOOL CALL: get_order_status({"order_id": "ORD-2077"})
+  TOOL RESULT: {"order_id": "ORD-2077", "eta": "2026-10-27", "item": "standing desk mat", "last_scan": "2026-10-27, left at front door", "ordered": "2026-10-20", "price": 44.99, "status": "refunded"}
+DESK step 2: offering ['search_help_center', 'create_draft_reply'] (~345 of ~828 contract tokens)
+STEP 2: model replied (in 1302 / out 88 tokens, stop_reason=tool_use)
+  TOOL CALL: search_help_center({"query": "refund how long appears in account processing time"})
+  TOOL RESULT: {"chunks": [{"chunk_id": "refund-timing/c1", "title": "How long refunds take", "section": "When the refund lands", "text": "Approved refunds go back to the original payment method within 5 to 7 business days.", "score": 0.597, "matched_by": ["keyword", "meaning"]}, {"chunk_id": "warranty/c2", "title": "Warranty", "section": "If a covered defect appears", "text": "The customer may choose a free repair, a free replacement, or a full refund.", "score": 0.589, "matched_by": ["keyword", "meaning"]}, {"chunk_id": "refund-timing/c2", "title": "How long refunds take", "section": "Confirmation", "text": "The customer gets an email confirmation when the refund is issued.", "score": 0.588, "matched_by": ["keyword", "meaning"]}], "note": "State only what these chunks state, and cite the chunk_id for every fact you use - an uncited fact fails the checker."}
+DESK step 3: offering ['search_help_center', 'create_draft_reply'] (~345 of ~828 contract tokens)
+STEP 3: model replied (in 1657 / out 200 tokens, stop_reason=tool_use)
+  TOOL CALL: create_draft_reply({"ticket_ref": "ticket about ORD-2077", "draft_text": "Hi,\n\nThanks for reaching out! I can confirm that your refund for order ORD-2077 has been processed. According to our policy, approved refunds go back to the original payment method within 5 to 7 business days. You should also receive an email confirmation when the refund is issued.\n\nIf you don't see the refund in your account within that timeframe, please let us know and we'll investigate further.\n\nBest regards,\nSupport Team"})
+  TOOL RESULT: {"draft_id": "DRAFT-0017", "status": "awaiting human approval", "note": "Draft saved. It has NOT been sent - a human approves every reply before sending."}
+DESK step 4: offering [] (~0 of ~828 contract tokens)
+STEP 4: model replied (in 1059 / out 56 tokens, stop_reason=end_turn)
+DONE: model finished - grading the saved draft (DRAFT-0017) in the reflection pass.
+REFLECT: draft PASSED the checklist unchanged.
+RUN TOTALS: 5838 in / 428 out tokens (6266 of 14000 budget), est. $0.0080, 6.4s elapsed
+
+----- RESULT (drafts need human approval before any send) -----
+Hi,
+
+Thanks for reaching out! I can confirm that your refund for order ORD-2077 has been processed. According to our policy, approved refunds go back to the original payment method within 5 to 7 business days. You should also receive an email confirmation when the refund is issued.
+
+If you don't see the refund in your account within that timeframe, please let us know and we'll investigate further.
+
+Best regards,
+Support Team
+
+== CITATION AUDIT (post-run, the B5 checker on DRAFT-0017's claims) ==
+PASS - "Approved refunds go back to the original payment method within 5 to 7 business days" [refund-timing/c1]
+PASS - "You'll also receive an email confirmation when the refund is issued" [refund-timing/c2]
+FAIL - "Refunds take 3 to 5 business days" [refund-timing/c1] - planted wrong claim; the stray number 3 is named.
+HONEST FINDING (carried from the v1 packed run, still true): the draft's
+text carries no inline [chunk-id] markers, and the reflection checklist
+has no citation item - the claims audit is what catches citation truth
+today. Named gap for the S4 critic rubric: "every policy claim carries
+its chunk id" as a graded checklist item.
+BEFORE/AFTER (same ticket, same code v2): B5 unpacked 9,406 tokens;
+B6 packed 6,266 tokens (-33%), reflection passed unchanged. (A v1 packed
+run measured 4,970 - run-to-run variance is the model's batching; both
+packed runs land far under the unpacked baseline.)

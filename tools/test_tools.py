@@ -252,5 +252,73 @@ for _evil in ("~/.ssh/id_ed25519", "/etc/passwd", "../outside.json"):
         _refused = True
     check(f"sandbox refuses {_evil}", _refused)
 
+# --- desk-packing + compaction (B6) -----------------------------------------
+import importlib.util as _ilu2
+
+_aspec = _ilu2.spec_from_file_location("sd_agent", TOOLS_DIR.parent / "v0" / "agent.py")
+agent_mod = _ilu2.module_from_spec(_aspec)
+_aspec.loader.exec_module(agent_mod)
+
+_RT_TICKET = "Hi, my refund for order ORD-2077 was approved and issued - how long until the money shows up in my account?"
+_job = agent_mod.new_job()
+_names = [t["name"] for t in agent_mod.pack_tools(_RT_TICKET, _job)]
+check(
+    "pack: a fresh ticket gets lookup + search only (no refund tool without a money-back ask, no draft tool before facts)",
+    _names == ["get_order_status", "search_help_center"],
+    str(_names),
+)
+
+_job2 = agent_mod.new_job()
+_names2 = [t["name"] for t in agent_mod.pack_tools("The desk mat arrived damaged - I want my money back please.", _job2)]
+check("pack: a money-back ask earns the refund tool a place on the desk", "issue_refund" in _names2, str(_names2))
+
+agent_mod.absorb(_job, "get_order_status", {"order_id": "ORD-2077"},
+                 '{"order_id": "ORD-2077", "status": "refunded", "item": "standing desk mat", "price": 44.99, "ordered": "2026-10-20", "eta": "2026-10-27", "last_scan": "2026-10-27, left at front door"}')
+agent_mod.absorb(_job, "search_help_center", {"query": "refund timing"},
+                 '{"chunks": [{"chunk_id": "refund-timing/c1", "title": "How long refunds take", "text": "Approved refunds go back to the original payment method within 5 to 7 business days."}]}')
+check(
+    "absorb: a refunded order becomes a do-not-reissue DECISION in state",
+    any("already issued" in d and "ORD-2077" in d for d in _job["decisions"]),
+    str(_job["decisions"]),
+)
+_names3 = [t["name"] for t in agent_mod.pack_tools(_RT_TICKET, _job)]
+check(
+    "pack: with facts on the desk the draft tool is offered and the fetched order's lookup is dropped",
+    "create_draft_reply" in _names3 and "get_order_status" not in _names3,
+    str(_names3),
+)
+
+_note = agent_mod.desk_note(_RT_TICKET, _job)
+check(
+    "desk note: carries the decision, the cited chunk, and the order fact",
+    "do NOT submit or issue another" in _note and "refund-timing/c1" in _note and "status=refunded" in _note,
+    _note[:200],
+)
+_job["draft_id"] = "DRAFT-0000"
+_names4 = [t["name"] for t in agent_mod.pack_tools(_RT_TICKET, _job)]
+check("pack: once the draft is saved, no tools are offered - the model writes its closing line", _names4 == [], str(_names4))
+
+_job3 = agent_mod.new_job()
+agent_mod.absorb(_job3, "get_order_status", {"order_id": "ORD-9999"}, "Error: no order found with id ORD-9999.")
+_names5 = [t["name"] for t in agent_mod.pack_tools("Any news on order ORD-9999?", _job3)]
+check(
+    "absorb+pack: a tried-and-missing order leaves the desk (no lookup offered for it again)",
+    "get_order_status" not in _names5,
+    str(_names5),
+)
+_note3 = agent_mod.desk_note("Any news on order ORD-9999?", _job3)
+check(
+    "desk note: a not-found lookup is carried as a fact, not silently dropped",
+    "NOT FOUND" in _note3 and "ORD-9999" in _note3,
+    _note3[:200],
+)
+_job3["draft_id"] = "DRAFT-0001"
+_note4 = agent_mod.desk_note("Any news on order ORD-9999?", _job3)
+check(
+    "desk note: once the draft is saved, the closing line says finish - never 'save the reply'",
+    "The reply is DONE" in _note4 and "save the reply with create_draft_reply" not in _note4,
+    _note4[-200:],
+)
+
 print(f"\n{'ALL CHECKS PASSED' if not failures else f'{len(failures)} CHECK(S) FAILED'}")
 sys.exit(1 if failures else 0)

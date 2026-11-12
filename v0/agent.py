@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Support Desk v0 - the bare-hands agent (bites B1 + B2 + B3 + B4).
+"""Support Desk v0 - the bare-hands agent (bites B1 + B2 + B3 + B4 + B5 + B6).
 
 One file, standard library only, NO framework. The whole agent is the
 while-loop in run_agent():
@@ -26,9 +26,15 @@ STUBS, named as stubs (repo rule: real over toy, stubs labelled):
 - The system of record is a local JSON file (tools/store.json) read and
   written by tools/store.py. Gap to real: S6 moves it behind the
   deployed service; the contracts do not change when it does.
-- search_help_center is a keyword stub behind a real contract. Gap to
-  real: B5 gives it chunking, embeddings, hybrid search and checked
-  citations.
+- search_help_center got real retrieval at B5 (chunking, hybrid
+  search, checked citations); its meaning net is word-weight vectors,
+  not a neural embedding - the swap point is the one embed() function
+  in tools/search_help_center/retrieval.py (Voyage is the upgrade).
+- Compaction (B6) rebuilds the desk from the loop's structured job
+  state, never from a model-written summary: decisions live in state
+  fields, so a summary cannot quietly drop them. Gap to real: a
+  model-written narrative layered over the state is later polish;
+  the state note is the floor that cannot lose a decision.
 - The reflection "critic" is the same small model wearing a checklist,
   not a separate agent. Gap to real: S4's critic is its own agent.
 - The reply is still a DRAFT only: create_draft_reply saves it with
@@ -38,6 +44,14 @@ STUBS, named as stubs (repo rule: real over toy, stubs labelled):
   human approves it out-of-band (the `approve` mode below) and the
   store read-back is the receipt. Every file the tools touch passes
   the sandbox guard (tools/sandbox.py) - see `escape-test` mode.
+B6 adds CONTEXT ENGINEERING: the loop PACKS the desk per step - only
+the tools this step can still need are offered (their contracts are
+the biggest fixed cost on the desk), and when the carried history
+grows past COMPACT_AT it is compacted into a DESK NOTE rebuilt from
+the loop's structured job state (orders fetched, chunks cited,
+decisions, pending actions). `longrun` runs the drill ticket with
+packing on; `longrun-raw` runs it through the unpacked loop - the
+before picture.
 - `brake-test` mode swaps the model for a scripted fake that always asks
   for the same tool call, so the no-progress brake can be tested
   deterministically, for free.
@@ -55,10 +69,18 @@ Run modes:
                                   read-back receipt (B4)
     python3 agent.py escape-test  two sandbox escape attempts + a control
                                   (B4)
+    python3 agent.py refund-timing  the B5 ticket: an issued refund -
+                                  when does the money land?
+    python3 agent.py longrun      the B6 long-run drill, packing ON
+                                  (step/token budgets raised for the
+                                  drill, logged in the trace)
+    python3 agent.py longrun-raw  the same drill ticket, packing OFF -
+                                  the before picture
 """
 
 import importlib.util
 import json
+import re
 import sys
 import time
 import urllib.request
@@ -86,6 +108,10 @@ MAX_TOKENS = 14000   # cost budget: total tokens (in + out) for the whole run.
                      # if a future bite's traced shape outgrows it, recalibrate
                      # from the trace again, with Bobby's say-so.
 MAX_SECONDS = 120    # time limit: wall-clock seconds for the whole run
+COMPACT_AT = 1200    # B6: when the carried history's estimated size
+                     # (chars/4 of the message JSON) passes this, the
+                     # loop compacts it into a DESK NOTE rebuilt from
+                     # job state before the next step (see desk_note()).
 # Haiku 4.5 list prices, used only to show the run's dollar estimate.
 INPUT_USD_PER_MTOK = 1.00
 OUTPUT_USD_PER_MTOK = 5.00
@@ -117,6 +143,7 @@ def _load_contract(name):
 
 TOOL_FUNCS = {name: _load_tool_func(name) for name in TOOL_NAMES}
 TOOLS = [_load_contract(name) for name in TOOL_NAMES]
+CONTRACT_BY_NAME = {c["name"]: c for c in TOOLS}
 
 SYSTEM_PROMPT = """You are the agent for Support Desk, a customer support system.
 Your job: take the ticket below and work it to a resolved, saved DRAFT reply.
@@ -188,6 +215,131 @@ def tokens_of(reply):
     return usage.get("input_tokens", 0), usage.get("output_tokens", 0)
 
 
+# ---------------------------------------------------------------------------
+# B6: context engineering - the desk is packed, not accumulated.
+#
+# The loop keeps a structured JOB STATE beside the transcript: orders
+# fetched, chunks cited, decisions made, pending actions, the saved
+# draft. Two mechanisms read it:
+#   pack_tools() - per step, offer only the tools this step can still
+#     need. Contracts are the biggest fixed cost on the desk (~829
+#     tokens for all four, every step, used or not).
+#   desk_note() - when the carried history grows past COMPACT_AT, the
+#     transcript is replaced by this note, rebuilt from job state.
+#     A summary written by a model can quietly drop the one decision
+#     that constrained everything later (B6 self-check Q1); a note
+#     rebuilt from state fields cannot - the decision IS a field.
+# ---------------------------------------------------------------------------
+MONEY_BACK_PHRASES = ("money back", "refund me", "want a refund", "refund please", "please refund")
+
+
+def est_tokens(text):
+    """Rough size estimate (chars/4) - for desk bookkeeping in traces,
+    never for billing; the API's usage numbers are the truth."""
+    return len(text) // 4
+
+
+def new_job():
+    return {"orders": {}, "citations": [], "decisions": [], "pending": [], "draft_id": None, "tried": []}
+
+
+def absorb(job, name, args, result):
+    """Fold one tool result into job state. Results are JSON strings;
+    anything unparsable simply does not enter state (the transcript
+    still carries it for this run)."""
+    if name == "get_order_status" and "no order found" in result:
+        # A failed lookup is a job fact too. The B6 drill's first packed
+        # run looped for 9 steps because state never recorded that
+        # ORD-9999 had already been tried - every compacted desk note
+        # silently omitted it, so the model kept hunting for the lamp.
+        oid = args.get("order_id")
+        if oid and oid not in job["tried"]:
+            job["tried"].append(oid)
+        return
+    try:
+        data = json.loads(result)
+    except (ValueError, TypeError):
+        return
+    if not isinstance(data, dict):
+        return
+    if name == "get_order_status" and "order_id" in data:
+        job["orders"][data["order_id"]] = data
+        if data.get("status") == "refunded":
+            job["decisions"].append(
+                f"Refund for {data['order_id']} is already issued - do NOT submit or issue another one."
+            )
+    elif name == "search_help_center":
+        seen = {c["chunk_id"] for c in job["citations"]}
+        for chunk in data.get("chunks", []):
+            if chunk.get("chunk_id") and chunk["chunk_id"] not in seen:
+                job["citations"].append(
+                    {"chunk_id": chunk["chunk_id"], "title": chunk.get("title", ""), "text": chunk.get("text", "")}
+                )
+    elif name == "issue_refund" and data.get("pending_action_id"):
+        job["pending"].append(data["pending_action_id"])
+        job["decisions"].append(
+            f"{data['pending_action_id']} submitted (refund for {args.get('order_id')}) - "
+            "awaiting human approval; do not resubmit."
+        )
+    elif name == "create_draft_reply" and data.get("draft_id"):
+        job["draft_id"] = data["draft_id"]
+
+
+def pack_tools(ticket, job):
+    """The desk-packing rule: which contracts earn a place THIS step.
+    Deliberately crude and deterministic - it errs toward offering
+    (the gates, not the pack, are the safety mechanism), and every
+    choice is logged in the trace's DESK line."""
+    names = []
+    wanted = set(re.findall(r"ORD-\d+", ticket))
+    missing = wanted - set(job["orders"]) - set(job["tried"])
+    if missing or (not job["orders"] and not job["tried"] and not job["citations"]):
+        names.append("get_order_status")
+    if not job["draft_id"]:
+        names.append("search_help_center")
+        low = ticket.lower()
+        all_fetched_refunded = bool(wanted) and wanted <= set(job["orders"]) and all(
+            job["orders"][o].get("status") == "refunded" for o in wanted
+        )
+        if any(p in low for p in MONEY_BACK_PHRASES) and not job["pending"] and not all_fetched_refunded:
+            names.append("issue_refund")
+        if job["orders"] or job["citations"]:
+            names.append("create_draft_reply")
+    return [CONTRACT_BY_NAME[n] for n in names]
+
+
+def desk_note(ticket, job):
+    """The compacted desk: goal + state, in plain lines. Built only
+    from job state - if a fact never entered state, it is not here,
+    and the trace's COMPACT line says what state held."""
+    lines = [
+        "DESK NOTE (compacted): the raw transcript was dropped. Everything below is the loop's structured job state, rebuilt from tool results - treat it as the facts of this job so far.",
+        f"Goal (the ticket): {ticket}",
+    ]
+    for oid, o in job["orders"].items():
+        lines.append(
+            f"Order {oid}: status={o.get('status')}, item={o.get('item')}, price=${o.get('price')}, "
+            f"ordered={o.get('ordered')}, eta={o.get('eta')}, last_scan={o.get('last_scan')}"
+        )
+    for oid in job["tried"]:
+        lines.append(f"Order {oid}: looked up - NOT FOUND in the system of record. Do not look it up again; the reply should ask the customer to double-check the id.")
+    for c in job["citations"]:
+        lines.append(f"Policy evidence [{c['chunk_id']}] ({c['title']}): \"{c['text']}\"")
+    for d in job["decisions"]:
+        lines.append(f"DECISION: {d}")
+    if job["pending"]:
+        lines.append(f"Pending actions awaiting human approval: {', '.join(job['pending'])}")
+    if job["draft_id"]:
+        # State-dependent closing: the drill's v1 note always said
+        # "save the reply with create_draft_reply" - even after the
+        # draft was saved and the tool had left the desk - and the
+        # model looped trying to obey an impossible instruction.
+        lines.append(f"Draft saved: {job['draft_id']} (awaiting human approval - saving is not sending). The reply is DONE: give your one-line summary and finish. Do not save another draft.")
+    else:
+        lines.append("Continue from here: do not re-fetch facts recorded above; finish the job and save the reply with create_draft_reply when the facts support it.")
+    return "\n".join(lines)
+
+
 def reflect_on_draft(ticket: str, draft: str, evidence, log):
     """The reflection pass: grade the draft, revise it once if it fails.
     Returns (final_draft, input_tokens, output_tokens).
@@ -225,12 +377,18 @@ def reflect_on_draft(ticket: str, draft: str, evidence, log):
     return draft, in_t, out_t
 
 
-def run_agent(ticket: str) -> str:
+def run_agent(ticket: str, pack: bool = True, max_steps=None, max_tokens=None) -> str:
     """THE LOOP (ReAct shape). Everything else in this file serves these
     lines - including the brakes, which are checked here, by the loop,
-    never left to the model's good behaviour."""
+    never left to the model's good behaviour. `pack` turns B6's
+    desk-packing + compaction on (the drill's raw arm turns it off);
+    max_steps/max_tokens let a drill raise the budgets for its own
+    job shape - logged in the trace when used."""
     # The desk: it starts with just the ticket on it.
     messages = [{"role": "user", "content": f"Ticket:\n{ticket}"}]
+    STEP_BUDGET = max_steps if max_steps is not None else MAX_STEPS
+    TOKEN_BUDGET = max_tokens if max_tokens is not None else MAX_TOKENS
+    job = new_job()  # B6: the structured job state beside the transcript
     trace = []
 
     def log(line):
@@ -240,6 +398,8 @@ def run_agent(ticket: str) -> str:
     started = time.time()
     total_in = total_out = 0
     last_call_key = None  # the no-progress notebook: the last tool call that ran
+    call_counts = {}  # B6: every (tool, inputs) pair and how often it ran
+    error_streak = 0  # B6: consecutive tool errors in this run
     evidence = []  # every tool result, kept for the reflection pass's desk
     saved_draft = None  # the last draft the agent saved via create_draft_reply
 
@@ -247,19 +407,41 @@ def run_agent(ticket: str) -> str:
         cost = (total_in * INPUT_USD_PER_MTOK + total_out * OUTPUT_USD_PER_MTOK) / 1_000_000
         return (
             f"RUN TOTALS: {total_in} in / {total_out} out tokens "
-            f"({total_in + total_out} of {MAX_TOKENS} budget), "
+            f"({total_in + total_out} of {TOKEN_BUDGET} budget), "
             f"est. ${cost:.4f}, {time.time() - started:.1f}s elapsed"
         )
 
     log(f"TICKET: {ticket}")
-    for step in range(1, MAX_STEPS + 1):
+    for step in range(1, STEP_BUDGET + 1):
         # Brake: time limit, checked before each new turn.
         if time.time() - started > MAX_SECONDS:
             log(f"BRAKE: time limit ({MAX_SECONDS}s) hit at step {step}. Escalating.")
             log(totals_line())
             return "(escalated to a human - time-limit brake fired)"
 
-        reply = call_model(messages)
+        # B6: pack the desk for this step. Compaction first (it can
+        # only shrink what the pack then carries), then the tool offer.
+        if pack and len(messages) > 2 and est_tokens(json.dumps(messages)) > COMPACT_AT:
+            before = est_tokens(json.dumps(messages))
+            note = desk_note(ticket, job)
+            messages = [{"role": "user", "content": f"Ticket:\n{ticket}\n\n{note}"}]
+            log(
+                f"COMPACT before step {step}: history ~{before} tokens -> desk note "
+                f"~{est_tokens(note)} tokens (state carried: {len(job['orders'])} orders, "
+                f"{len(job['citations'])} citations, {len(job['decisions'])} decisions, "
+                f"{len(job['pending'])} pending)"
+            )
+        if pack:
+            step_tools = pack_tools(ticket, job)
+            offered = [t["name"] for t in step_tools]
+            log(
+                f"DESK step {step}: offering {offered} "
+                f"(~{sum(est_tokens(json.dumps(t)) for t in step_tools)} of "
+                f"~{sum(est_tokens(json.dumps(t)) for t in TOOLS)} contract tokens)"
+            )
+            reply = call_model(messages, tools=step_tools if step_tools else None)
+        else:
+            reply = call_model(messages)
         in_t, out_t = tokens_of(reply)
         total_in += in_t
         total_out += out_t
@@ -269,8 +451,8 @@ def run_agent(ticket: str) -> str:
         )
 
         # Brake: cost budget, checked the moment the meter moves.
-        if total_in + total_out > MAX_TOKENS:
-            log(f"BRAKE: cost budget ({MAX_TOKENS} tokens) exceeded at step {step}. Escalating.")
+        if total_in + total_out > TOKEN_BUDGET:
+            log(f"BRAKE: cost budget ({TOKEN_BUDGET} tokens) exceeded at step {step}. Escalating.")
             log(totals_line())
             return "(escalated to a human - cost-budget brake fired)"
 
@@ -322,6 +504,21 @@ def run_agent(ticket: str) -> str:
                     "(escalated to a human - no-progress brake fired: the agent "
                     f"tried to call {call['name']} twice in a row with identical inputs)"
                 )
+            # Brake (B6 drill finding): the repeated-call rule. The
+            # no-progress rule only catches CONSECUTIVE repeats; the
+            # drill's packed v1 run evaded it by alternating calls.
+            # The same tool + inputs a third time in one run is a loop,
+            # whatever sits between the repeats.
+            if call_counts.get(call_key, 0) >= 2:
+                log(
+                    f"BRAKE: repeated-call rule - {call['name']}({json.dumps(call['input'])}) "
+                    "has already run twice in this run. Stopping and escalating."
+                )
+                log(totals_line())
+                return (
+                    "(escalated to a human - repeated-call brake fired: the agent "
+                    f"kept re-running {call['name']} with identical inputs)"
+                )
             log(f"  TOOL CALL: {call['name']}({json.dumps(call['input'])})")
             func = TOOL_FUNCS.get(call["name"])
             if func is None:
@@ -337,7 +534,9 @@ def run_agent(ticket: str) -> str:
                         "Check the contract for the exact inputs this tool takes, then try again."
                     )
             last_call_key = call_key
+            call_counts[call_key] = call_counts.get(call_key, 0) + 1
             evidence.append(result)
+            absorb(job, call["name"], call["input"], result)
             if call["name"] == "create_draft_reply" and '"draft_id"' in result:
                 saved_draft = {
                     "id": json.loads(result)["draft_id"],
@@ -349,18 +548,30 @@ def run_agent(ticket: str) -> str:
                 log("  PREVIEW: the tool showed what would happen - nothing was changed.")
             if call["name"] == "issue_refund" and '"pending_action_id"' in result:
                 log("  GATE: the write is submitted, not executed - it waits for a human approver, outside this loop.")
+            # Brake (B6 drill finding): the error-streak rule. Two
+            # tool errors in a row means the agent is flailing at a
+            # contract it cannot operate - escalate instead of letting
+            # it spend the run guessing shapes.
+            if isinstance(result, str) and result.startswith("Error:"):
+                error_streak += 1
+            else:
+                error_streak = 0
+            if error_streak >= 2:
+                log("BRAKE: error-streak rule - two tool errors in a row. Stopping and escalating.")
+                log(totals_line())
+                return "(escalated to a human - error-streak brake fired: two tool errors in a row)"
             results.append(
                 {"type": "tool_result", "tool_use_id": call["id"], "content": result}
             )
         messages.append({"role": "user", "content": results})
 
     # The step budget is the brake of last resort.
-    log(f"BRAKE: step budget ({MAX_STEPS} steps) ran out before the model finished. Escalating.")
+    log(f"BRAKE: step budget ({STEP_BUDGET} steps) ran out before the model finished. Escalating.")
     log(totals_line())
     return "(escalated to a human - step-budget brake fired)"
 
 
-def fake_model(messages):
+def fake_model(messages, system=None, tools=None):
     """A scripted stand-in brain for the brake test: whatever is on the
     desk, it asks for the same tool call again. A real stuck loop, minus
     the API bill - used to prove the no-progress brake fires."""
@@ -471,6 +682,26 @@ if __name__ == "__main__":
             "Hi, my refund for order ORD-2077 was approved and issued - "
             "how long until the money shows up in my account?"
         )
+    elif mode in ("longrun", "longrun-raw"):
+        # THE B6 LONG-RUN DRILL: one customer, six asks, three orders -
+        # enough steps for the desk to rot. The buried fact: the FIRST
+        # lookup shows ORD-2077 is already refunded, while ask 3 begs
+        # for a second refund. Steps and tokens get drill budgets
+        # (logged in the trace) - budgets are calibrated per job shape.
+        ticket = (
+            "Hi, several things at once, sorry. 1) My order ORD-1042 is a week late - "
+            "where is it? 2) If it never turns up, what happens - do I get my money back? "
+            "3) The desk mat from ORD-2077 is still curled and unusable - refund me for "
+            "that too please. 4) I also ordered a lamp, order ORD-9999 - any news on it? "
+            "5) What is your exchange policy if something does not fit? 6) And does the "
+            "warranty cover a mat that curls like this? Please answer everything in one reply."
+        )
+        packed = mode == "longrun"
+        print(f"DRILL: long-run ticket, desk-packing {'ON' if packed else 'OFF'}; step budget 16, token budget 60000 (drill overrides).")
+        draft = run_agent(ticket, pack=packed, max_steps=16, max_tokens=60000)
+        print("\n----- RESULT (drafts need human approval before any send) -----")
+        print(draft)
+        sys.exit(0)
     else:
         # A messy ticket grown from golden-set t11 (all-caps, a week late)
         # with the order question from t04 - real tickets arrive like this.
