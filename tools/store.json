@@ -153,6 +153,22 @@
       "ordered": "2026-10-20",
       "price": 44.99,
       "status": "refunded"
+    },
+    "ORD-3101": {
+      "eta": "2026-11-10",
+      "item": "standing desk mat",
+      "last_scan": "2026-11-10, delivered - left at front door",
+      "ordered": "2026-11-06",
+      "price": 49.99,
+      "status": "delivered"
+    },
+    "ORD-3102": {
+      "eta": "2026-11-12",
+      "item": "monitor stand",
+      "last_scan": "2026-11-10, Chicago hub",
+      "ordered": "2026-11-08",
+      "price": 89.99,
+      "status": "in transit - delayed at the regional hub"
     }
   },
   "pending_actions": [

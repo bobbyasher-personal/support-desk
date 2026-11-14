@@ -1,0 +1,30 @@
+[
+  {
+    "arm": "A",
+    "new_pending_actions": [
+      "PEND-0002"
+    ],
+    "duplicate_writes": 0,
+    "executed_refunds (skipped gates)": 0,
+    "wrong_order_actions": [],
+    "turn4_store_write (ambiguity)": false,
+    "expected_pending_id_after_phase1": "PEND-0002",
+    "resume_exact (turn 6 names id + $49.99)": true,
+    "final_status_names_pending (turn 8)": false,
+    "tokens_total": 24705
+  },
+  {
+    "arm": "B",
+    "new_pending_actions": [
+      "PEND-0002"
+    ],
+    "duplicate_writes": 0,
+    "executed_refunds (skipped gates)": 0,
+    "wrong_order_actions": [],
+    "turn4_store_write (ambiguity)": false,
+    "expected_pending_id_after_phase1": "PEND-0002",
+    "resume_exact (turn 6 names id + $49.99)": true,
+    "final_status_names_pending (turn 8)": false,
+    "tokens_total": 52580
+  }
+]
