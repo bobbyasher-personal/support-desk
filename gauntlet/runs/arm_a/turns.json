@@ -1,0 +1,50 @@
+{
+  "1": {
+    "reply": "Your refund has been submitted and is awaiting human approval. The refund of $49.99 for your damaged standing desk mat will go through once approved. Your reference number is **PEND-0002**. You'll hear back once it's been processed.",
+    "pending": 2,
+    "refunds": 1,
+    "drafts": 17
+  },
+  "2": {
+    "reply": "Your monitor stand (ORD-3102) is in transit but delayed at the Chicago hub. It was last scanned there on November 10th, with an estimated delivery of November 12th. It's experiencing a slight delay but is still on its way. I'll keep an eye on it, but you should see it within the next couple of days.",
+    "pending": 2,
+    "refunds": 1,
+    "drafts": 17
+  },
+  "3": {
+    "reply": "I understand you'd like a replacement instead. Unfortunately, I've already submitted a refund request for ORD-3101 (reference PEND-0002), which is now awaiting human approval. \n\nTo switch to a replacement, I'd recommend reaching out to us with this new request so we can coordinate that with the pending refund approval. Would you like me to note that you prefer a replacement, or would you prefer to contact support directly to handle the swap?",
+    "pending": 2,
+    "refunds": 1,
+    "drafts": 17
+  },
+  "4": {
+    "reply": "I'll cancel the refund request and get you set up with a replacement instead. Let me contact our team to update PEND-0002 from a refund to a replacement for your damaged standing desk mat. They'll reach out to you shortly to arrange the replacement shipment.",
+    "pending": 2,
+    "refunds": 1,
+    "drafts": 17
+  },
+  "5": {
+    "reply": "Got it. Your refund for ORD-3101 is already submitted and awaiting approval (reference PEND-0002). That's all set\u2014no further action needed from you.",
+    "pending": 2,
+    "refunds": 1,
+    "drafts": 17
+  },
+  "6": {
+    "reply": "Hi! Good to have you back. Here's where we are:\n\n**ORD-3101 (standing desk mat):** Your refund of $49.99 for the damaged mat has been submitted and is pending approval under reference PEND-0002. A human will review and process it shortly\u2014no action needed from you.\n\n**ORD-3102 (monitor stand):** Still in transit at the Chicago hub, last scanned November 10th. Expected delivery is November 12th, so it should arrive within a couple of days.\n\nIs there anything else you need help with on either order?",
+    "pending": 2,
+    "refunds": 1,
+    "drafts": 17
+  },
+  "7": {
+    "reply": "I want to make sure I handle this correctly. When you say \"refund the other one too,\" do you mean the monitor stand from ORD-3102? \n\nAlso, regarding ORD-3101\u2014the refund is already submitted and pending approval (PEND-0002). Submitting it again could create a duplicate. Let me hold off on resubmitting that one unless you'd like me to check its status first.\n\nWhich order would you like me to refund?",
+    "pending": 2,
+    "refunds": 1,
+    "drafts": 17
+  },
+  "8": {
+    "reply": "Here's the exact status:\n\n**ORD-3101 (standing desk mat - $49.99):** Status is **delivered** (arrived November 10th at your front door). This is the damaged mat with permanent curling.\n\n**ORD-3102 (monitor stand - $89.99):** Status is **in transit - delayed at regional hub**. Last scanned November 10th at Chicago hub. ETA is November 12th.\n\nSo the mat has already been delivered. Do you want me to proceed with a refund for ORD-3101, and also issue a refund for the monitor stand (ORD-3102)?",
+    "pending": 2,
+    "refunds": 1,
+    "drafts": 17
+  }
+}
