@@ -1,0 +1,56 @@
+{
+  "case_id": "ORD-3101",
+  "state_version": 3,
+  "customer_ref": "ORD-3101",
+  "current_goal": "refund damaged desk mat",
+  "current_order_id": "ORD-3101",
+  "live_order_ids": [
+    "ORD-3101",
+    "ORD-3102"
+  ],
+  "facts": [
+    {
+      "fact": "standing desk mat ordered 2026-11-06, delivered 2026-11-10, price $49.99",
+      "source": "get_order_status",
+      "order_id": "ORD-3101"
+    },
+    {
+      "fact": "customer reports item arrived with permanent curl",
+      "source": "customer message",
+      "order_id": "ORD-3101"
+    },
+    {
+      "fact": "monitor stand ORD-3102 ordered 2026-11-08, in transit delayed at Chicago hub as of 2026-11-10, ETA 2026-11-12, price $89.99",
+      "source": "get_order_status",
+      "order_id": "ORD-3102"
+    }
+  ],
+  "latest_decision": {
+    "remedy": "refund $49.99 for damaged standing desk mat",
+    "order_id": "ORD-3101",
+    "decided_turn": 5
+  },
+  "superseded_decisions": [
+    {
+      "remedy": "send replacement standing desk mat for damaged item",
+      "order_id": "ORD-3101",
+      "status": "superseded - customer reverted to refund",
+      "superseded_by_turn": 5
+    },
+    {
+      "remedy": "refund $49.99 for damaged standing desk mat",
+      "order_id": "ORD-3101",
+      "status": "superseded - customer changed to replacement",
+      "superseded_by_turn": 3
+    }
+  ],
+  "completed_actions": [],
+  "pending_approval": {
+    "action_id": "PEND-0002",
+    "order_id": "ORD-3101",
+    "amount": 49.99,
+    "status": "awaiting approval"
+  },
+  "open_question": null,
+  "updated_at_turn": 5
+}
