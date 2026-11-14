@@ -1,0 +1,49 @@
+
+===== GRAPH TICKET: default =====
+TICKET: MY PACKAGE IS A WEEK LATE AND SUPPORT KEEPS IGNORING ME. THIS IS UNACCEPTABLE. My order is ORD-1042 - where is it??
+  [agent] step 1: desk = ['get_order_status', 'search_help_center']
+  [tools] get_order_status {"order_id": "ORD-1042"} -> {"order_id": "ORD-1042", "eta": "2026-11-07", "item": "wireless earbuds", "last_scan": "2026-11-03, Chicago hub", "ordered": "2026-10-26", "price": 59.99, "status": "in transit - delayed at the regional hub"}
+  [agent] step 2: desk = ['search_help_center', 'create_draft_reply']
+  [tools] search_help_center {"query": "late or delayed package what can we do"} -> {"chunks": [{"chunk_id": "late-or-lost-package/c1", "title": "Late or lost packages", "section": "When a package counts as late or lost", "text": "If a package is more than 7 days past its estimated delivery date, or its tracking has not moved for 5 days, the customer may choose a full refund or a f
+  [agent] step 3: desk = ['search_help_center', 'create_draft_reply']
+  [tools] create_draft_reply {"ticket_ref": "ORD-1042", "draft_text": "Thank you for reaching out, and I sincerely apologize for the delay on your order and for the lack of response from our support team\u2014that's not the servi -> {"draft_id": "DRAFT-0018", "status": "awaiting human approval", "note": "Draft saved. It has NOT been sent - a human approves every reply before sending."}
+  [agent] step 4: desk = []
+REFLECT: draft FAILED the checklist - revised draft below.
+  [reflect] revision saved -> {"draft_id": "DRAFT-0019", "status": "awaiting human approval", "note": "Draft saved. It has NOT been sent - a human approves every reply before sending."}
+CHECKPOINT: state saved at thread ticket-default; next=END; steps=4, tokens=6896, draft=DRAFT-0019
+REPLY: **Summary:** Looked up order ORD-1042 (wireless earbuds delayed at Chicago hub since Nov 3rd), informed customer of refund or reshipment options per policy, and saved draft reply for approval.
+RUN: 9.8s, tokens 6896 (budget 14000), draft DRAFT-0019
+STORE: restored to the pre-run snapshot.
+
+===== GRAPH TICKET: refund-timing =====
+TICKET: Hi, my refund for order ORD-2077 was approved and issued - how long until the money shows up in my account?
+  [agent] step 1: desk = ['get_order_status', 'search_help_center']
+  [tools] get_order_status {"order_id": "ORD-2077"} -> {"order_id": "ORD-2077", "eta": "2026-10-27", "item": "standing desk mat", "last_scan": "2026-10-27, left at front door", "ordered": "2026-10-20", "price": 44.99, "status": "refunded"}
+  [tools] search_help_center {"query": "refund how long to appear in account"} -> {"chunks": [{"chunk_id": "refund-timing/c1", "title": "How long refunds take", "section": "When the refund lands", "text": "Approved refunds go back to the original payment method within 5 to 7 business days.", "score": 0.633, "matched_by": ["keyword", "meaning"]}, {"chunk_id": "warranty/c2", "title
+  [agent] step 2: desk = ['search_help_center', 'create_draft_reply']
+  [tools] create_draft_reply {"ticket_ref": "ORD-2077", "draft_text": "Hi,\n\nThanks for checking in on your refund for order ORD-2077. According to our policy, approved refunds go back to the original payment method within 5 to  -> {"draft_id": "DRAFT-0018", "status": "awaiting human approval", "note": "Draft saved. It has NOT been sent - a human approves every reply before sending."}
+  [agent] step 3: desk = []
+REFLECT: draft PASSED the checklist unchanged.
+CHECKPOINT: state saved at thread ticket-refund-timing; next=END; steps=3, tokens=4935, draft=DRAFT-0018
+REPLY: **Summary:** Looked up order ORD-2077 (refund status confirmed) and searched refund timing policy; drafted reply explaining that approved refunds appear in 5-7 business days and saved as DRAFT-0018 awaiting approval.
+RUN: 5.8s, tokens 4935 (budget 14000), draft DRAFT-0018
+STORE: restored to the pre-run snapshot.
+
+===== GRAPH TICKET: refund-gate =====
+TICKET: The desk mat from my order ORD-3101 arrived with a bad curl that won't flatten out - it's unusable. I want my money back, please.
+  [agent] step 1: desk = ['get_order_status', 'search_help_center', 'issue_refund']
+  [tools] get_order_status {"order_id": "ORD-3101"} -> {"order_id": "ORD-3101", "eta": "2026-11-10", "item": "standing desk mat", "last_scan": "2026-11-10, delivered - left at front door", "ordered": "2026-11-06", "price": 49.99, "status": "delivered"}
+  [tools] search_help_center {"query": "refund damaged item"} -> {"chunks": [{"chunk_id": "damaged-on-arrival/c1", "title": "Damaged on arrival", "section": "If an item arrives damaged", "text": "If an item arrives damaged, the customer may choose a free replacement (a prepaid return label is provided for the damaged item) or a full refund.", "score": 0.887, "mat
+  [agent] step 2: desk = ['search_help_center', 'issue_refund', 'create_draft_reply']
+  [tools] issue_refund {"order_id": "ORD-3101", "reason": "item arrived damaged", "preview": true} -> {"mode": "preview", "would_refund": {"order_id": "ORD-3101", "item": "standing desk mat", "amount": 49.99, "order_status_now": "delivered", "reason": "item arrived damaged"}, "note": "PREVIEW ONLY - nothing has changed: no refund, no pending action. To proceed, call this tool again with preview=fals
+  [agent] step 3: desk = ['search_help_center', 'issue_refund', 'create_draft_reply']
+  [tools] issue_refund {"order_id": "ORD-3101", "reason": "item arrived damaged", "preview": false} -> {"pending_action_id": "PEND-0002", "status": "awaiting approval", "would_refund": {"order_id": "ORD-3101", "item": "standing desk mat", "amount": 49.99, "order_status_now": "delivered", "reason": "item arrived damaged"}, "note": "Submitted to the approval gate. The refund has NOT been issued - a hum
+  [agent] step 4: desk = ['search_help_center', 'create_draft_reply']
+  [tools] create_draft_reply {"ticket_ref": "ticket about ORD-3101", "draft_text": "Hi,\n\nThank you for letting us know that your standing desk mat arrived with a curl that won't flatten out. I'm sorry to hear it's unusable.\n\n -> {"draft_id": "DRAFT-0018", "status": "awaiting human approval", "note": "Draft saved. It has NOT been sent - a human approves every reply before sending."}
+  [agent] step 5: desk = []
+REFLECT: draft FAILED the checklist - revised draft below.
+  [reflect] revision saved -> {"draft_id": "DRAFT-0019", "status": "awaiting human approval", "note": "Draft saved. It has NOT been sent - a human approves every reply before sending."}
+CHECKPOINT: state saved at thread ticket-refund-gate; next=END; steps=5, tokens=11598, draft=DRAFT-0019
+REPLY: **Summary:** Verified order ORD-3101 was delivered with a damaged desk mat, confirmed refund eligibility, submitted $49.99 refund to approval gate, and saved draft reply.
+RUN: 9.8s, tokens 11598 (budget 14000), draft DRAFT-0019
+STORE: restored to the pre-run snapshot.

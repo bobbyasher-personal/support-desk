@@ -1,0 +1,12 @@
+{
+  "new_pending_actions": [
+    "PEND-0002"
+  ],
+  "duplicate_writes": 0,
+  "executed_refunds (skipped gates)": 0,
+  "checkpoint_after_phase1_pending": [
+    "PEND-0002"
+  ],
+  "resume_exact (turn 6 names id + $49.99)": true,
+  "final_status_names_pending (turn 8)": true
+}

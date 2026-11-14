@@ -1,0 +1,51 @@
+[
+  {
+    "case": "cg1",
+    "paused_at_approval": true,
+    "model_calls": 3,
+    "model_tokens": 3037,
+    "drafts_created": 1,
+    "pending_created": 0,
+    "refunds_executed_before_approval": 0,
+    "escalated": null,
+    "receipt": {
+      "draft_id": "DRAFT-0018",
+      "draft_status": "approved",
+      "pending_action": null,
+      "refund_id": null,
+      "approved_by": "bobby",
+      "order_status_now": "in transit - delayed at the regional hub"
+    },
+    "seconds": 6.7
+  },
+  {
+    "case": "cg2",
+    "paused_at_approval": true,
+    "model_calls": 3,
+    "model_tokens": 3099,
+    "drafts_created": 1,
+    "pending_created": 1,
+    "refunds_executed_before_approval": 0,
+    "escalated": null,
+    "receipt": {
+      "draft_id": "DRAFT-0018",
+      "draft_status": "approved",
+      "pending_action": "PEND-0002",
+      "refund_id": "REF-0002",
+      "approved_by": "bobby",
+      "order_status_now": "refunded"
+    },
+    "seconds": 5.8
+  },
+  {
+    "case": "cg3",
+    "paused_at_approval": false,
+    "model_calls": 0,
+    "model_tokens": 0,
+    "drafts_created": 0,
+    "pending_created": 0,
+    "refunds_executed_before_approval": 0,
+    "escalated": "policy gate blocked: ORD-2077: already refunded (REF-0001, $44.99) - a second refund is refused",
+    "seconds": 0.2
+  }
+]
