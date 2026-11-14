@@ -149,3 +149,23 @@ def approve_and_execute(action_id: str, approver: str) -> dict:
     record["refund_id"] = refund["refund_id"]
     save_store(store)
     return record
+
+
+def set_draft_status(draft_id: str, status: str) -> dict:
+    """Record the human's decision on a draft (B8's control graph: the
+    approval node writes the outcome back so the receipt is a read-back
+    from the record, not a claim in a trace). Only a draft still
+    'awaiting human approval' can transition; anything else raises
+    GateError, so a decided draft can never be quietly re-decided."""
+    store = load_store()
+    draft = next((d for d in store.get("drafts", []) if d["draft_id"] == draft_id), None)
+    if draft is None:
+        raise GateError(f"no draft with id '{draft_id}'")
+    if draft["status"] != "awaiting human approval":
+        raise GateError(
+            f"draft {draft_id} is '{draft['status']}', not 'awaiting human "
+            "approval' - it cannot be decided again"
+        )
+    draft["status"] = status
+    save_store(store)
+    return draft
