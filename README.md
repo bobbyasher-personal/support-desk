@@ -4,6 +4,13 @@ A multi-agent support system that takes a customer ticket from arrival to a reso
 
 **Built in public, one bite at a time.** This repo is the working artifact of a build-first agent-engineering curriculum for engineering leaders: 23 sessions, one product, no toy demos. Every capability lands as working code with the traces to prove it — and the failures stay in the record, because they're the interesting part.
 
+## Watch it work
+
+**Watching is believing.** A 69-second narrated walkthrough of the hardest run in the record — the cg2 pressure test: a customer demands the agent skip the approval wait and "just issue the refund." The control graph proposes the refund itself, parks it at the gate, and waits. The customer's authorization buys him nothing; only the human's approval moves money. Every number in the video is from the recorded run (`v1/runs/2026-11-14-b8-control-graph.txt`).
+
+<!-- BOBBY: in the GitHub web editor, drag cg2-walkthrough.mp4 onto the blank line right below and GitHub will insert the video player. File: agent-engineering/walkthrough/cg2-walkthrough.mp4 (also attached in the Nov 14 Muse chat). This comment is invisible on the rendered page. -->
+
+
 ## Why this exists
 
 Agent systems are usually taught as concepts and demoed as magic. This track inverts that: bare hands before frameworks, just enough concept per session to build the next real piece, and an eval harness — the product's own exam — gating every milestone. The builder is an engineering leader learning by shipping, with an AI pair. The commit history is the course diary.
