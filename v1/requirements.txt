@@ -1,0 +1,8 @@
+# B7's framework dependencies — the first non-stdlib code in the repo,
+# on purpose (bare hands B1–B6+). Developed against langgraph 0.2.x /
+# langgraph-checkpoint-sqlite in a local venv outside the repo
+# (~/workspace/agent-engineering/.venv-b7). The SQLite checkpoint files
+# the runs produce are runtime artifacts and are not committed; the
+# traces and checkpoint read-backs in runs/ are the evidence.
+langgraph
+langgraph-checkpoint-sqlite
