@@ -11,6 +11,12 @@ A multi-agent support system that takes a customer ticket from arrival to a reso
 <!-- BOBBY: in the GitHub web editor, drag cg2-walkthrough.mp4 onto the blank line right below and GitHub will insert the video player. File: agent-engineering/walkthrough/cg2-walkthrough.mp4 (also attached in the Nov 14 Muse chat). This comment is invisible on the rendered page. -->
 
 
+## The capabilities map
+
+![The Capabilities Map — six capabilities, two loops](docs/capabilities-map.svg)
+
+Six capabilities, drawn as the system they form — two loops, not a pipeline. The **run loop**: the agent works grounded by **RAG** (cited facts, not memory) and bounded by **Governance** (the dashed frame — gates, the approval line, the sandbox, budgets), while **Observability** records every run. The **improvement loop**: traces feed **Self-Improvement**, whose proposals re-enter only through **Evaluation**, the gate — no change, human or self-made, ships unproven. **Production** (durable, idempotent, cost-capped) is the ground underneath all of it. Each capability is built piece by piece across the bites below, then graded by the exam.
+
 ## Why this exists
 
 Agent systems are usually taught as concepts and demoed as magic. This track inverts that: bare hands before frameworks, just enough concept per session to build the next real piece, and an eval harness — the product's own exam — gating every milestone. The builder is an engineering leader learning by shipping, with an AI pair. The commit history is the course diary.
