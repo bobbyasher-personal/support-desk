@@ -11,6 +11,12 @@ A multi-agent support system that takes a customer ticket from arrival to a reso
 <!-- BOBBY: in the GitHub web editor, drag cg2-walkthrough.mp4 onto the blank line right below and GitHub will insert the video player. File: agent-engineering/walkthrough/cg2-walkthrough.mp4 (also attached in the Nov 14 Muse chat). This comment is invisible on the rendered page. -->
 
 
+
+https://github.com/user-attachments/assets/c1781254-812f-4b18-985b-8157d741925a
+
+
+
+
 ## The capabilities map
 
 ![The Capabilities Map — six capabilities, two loops](docs/capabilities-map.svg)
