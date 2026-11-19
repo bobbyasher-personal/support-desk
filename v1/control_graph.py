@@ -61,6 +61,7 @@ import json
 import re
 import sys
 import time
+from contextlib import contextmanager
 from pathlib import Path
 from typing import TypedDict
 
@@ -79,6 +80,76 @@ _spec.loader.exec_module(agent)
 
 TRACE = []
 MODEL_CALLS = {"n": 0, "tokens": 0}
+
+# S2 — the flight recorder (v1/tracing.py). A driver sets TRACER before
+# invoking and every node, model call, and tool call leaves a span in
+# the trace store. TRACER None (offline tests, evals unless they opt
+# in) = recording off, zero behavior change.
+TRACER = None
+
+
+@contextmanager
+def _span(name, kind, attributes=None):
+    if TRACER is None:
+        yield None
+    else:
+        with TRACER.span(name, kind, attributes) as record:
+            yield record
+
+
+_NODE_KINDS = {
+    "intake": "agent.operation", "fetch_facts": "agent.operation",
+    "policy_gate": "supportdesk.gate", "propose_pending": "agent.operation",
+    "research": "agent.operation", "draft": "agent.operation",
+    "rubric_gate": "supportdesk.gate", "approval": "supportdesk.human",
+    "finalize": "agent.operation",
+}
+
+
+def _node_attrs(name, out):
+    """Governance attributes stamped on a node's span from the state
+    update the node returned — the verdicts and references a reader of
+    the trace needs without re-running anything."""
+    attrs = {}
+    if name == "intake":
+        attrs["supportdesk.case_type"] = out.get("case_type")
+        attrs["supportdesk.order_ids"] = out.get("order_ids")
+    elif name == "policy_gate":
+        gate = out.get("gate", {})
+        attrs["supportdesk.gate.name"] = "policy_gate"
+        attrs["supportdesk.gate.verdict"] = gate.get("verdict")
+        attrs["supportdesk.gate.reasons"] = gate.get("reasons")
+    elif name == "propose_pending":
+        if out.get("pending_id"):
+            attrs["supportdesk.pending_action"] = out["pending_id"]
+    elif name == "draft":
+        attrs["supportdesk.draft_id"] = out.get("draft_id")
+        attrs["supportdesk.draft_attempt"] = out.get("draft_attempts")
+    elif name == "rubric_gate":
+        fails = out.get("rubric_fails") or []
+        attrs["supportdesk.gate.name"] = "rubric_gate"
+        attrs["supportdesk.gate.verdict"] = "pass" if not fails else "fail"
+        attrs["supportdesk.gate.reasons"] = fails
+    elif name == "approval":
+        decision = out.get("decision", {})
+        attrs["supportdesk.approval.approved"] = decision.get("approved")
+        attrs["supportdesk.approval.approver"] = decision.get("approver")
+    elif name == "finalize":
+        attrs["supportdesk.receipt"] = out.get("receipt")
+    if out.get("escalated"):
+        attrs["supportdesk.escalated"] = out["escalated"]
+    return attrs
+
+
+def _traced(name, fn):
+    def wrapper(state):
+        with _span(name, _NODE_KINDS[name], {"supportdesk.node": name}) as record:
+            out = fn(state)
+            if record is not None and isinstance(out, dict):
+                TRACER.set(record, **_node_attrs(name, out))
+            return out
+    wrapper.__name__ = name
+    return wrapper
 
 
 def log(line=""):
@@ -128,7 +199,10 @@ def intake(state):
 def fetch_facts(state):
     facts = {}
     for oid in state["order_ids"]:
-        raw = agent.TOOL_FUNCS["get_order_status"](order_id=oid)
+        with _span(f"get_order_status {oid}", "gen_ai.tool",
+                   {"gen_ai.tool.name": "get_order_status",
+                    "supportdesk.order_id": oid}):
+            raw = agent.TOOL_FUNCS["get_order_status"](order_id=oid)
         try:
             facts[oid] = json.loads(raw)
         except ValueError:
@@ -174,14 +248,20 @@ def propose_pending(state):
     target = state["order_ids"][0]
     fact = state["facts"][target]
     reason = "customer reports the item arrived damaged/unusable (from the ticket)"
-    preview = json.loads(agent.TOOL_FUNCS["issue_refund"](
-        order_id=target, reason=reason, preview=True))
+    with _span("issue_refund preview", "gen_ai.tool",
+               {"gen_ai.tool.name": "issue_refund", "supportdesk.preview": True,
+                "supportdesk.order_id": target}):
+        preview = json.loads(agent.TOOL_FUNCS["issue_refund"](
+            order_id=target, reason=reason, preview=True))
     amount = preview["would_refund"]["amount"]
     if amount != fact["price"]:
         log(f"  [propose · SPINE] BLOCK: preview amount {amount} != record price {fact['price']}")
         return {"escalated": "preview/record amount mismatch"}
-    submitted = json.loads(agent.TOOL_FUNCS["issue_refund"](
-        order_id=target, reason=reason, preview=False))
+    with _span("issue_refund submit", "gen_ai.tool",
+               {"gen_ai.tool.name": "issue_refund", "supportdesk.preview": False,
+                "supportdesk.order_id": target}):
+        submitted = json.loads(agent.TOOL_FUNCS["issue_refund"](
+            order_id=target, reason=reason, preview=False))
     pid = submitted["pending_action_id"]
     log(f"  [propose · SPINE] preview ${amount} == record price; submitted {pid} "
         f"(awaiting approval, nothing executed)")
@@ -206,8 +286,14 @@ DRAFT_SYS = (
 
 
 def _call(messages, system, tools=None):
-    reply = agent.call_model(messages, system=system, tools=tools)
-    i, o = agent.tokens_of(reply)
+    with _span("model call", "gen_ai.chat",
+               {"gen_ai.operation.name": "chat",
+                "gen_ai.request.model": agent.MODEL}) as record:
+        reply = agent.call_model(messages, system=system, tools=tools)
+        i, o = agent.tokens_of(reply)
+        if record is not None:
+            TRACER.set(record, **{"gen_ai.usage.input_tokens": i,
+                                  "gen_ai.usage.output_tokens": o})
     MODEL_CALLS["n"] += 1
     MODEL_CALLS["tokens"] += i + o
     return reply
@@ -227,7 +313,10 @@ def research(state):
             break
         results = []
         for tu in uses:
-            out = agent.TOOL_FUNCS["search_help_center"](**tu.get("input", {}))
+            with _span("search_help_center", "gen_ai.tool",
+                       {"gen_ai.tool.name": "search_help_center",
+                        "supportdesk.query": tu.get("input", {})}):
+                out = agent.TOOL_FUNCS["search_help_center"](**tu.get("input", {}))
             chunks.append(str(out))
             log(f"  [research · AGENT] search {tu.get('input', {})} -> {len(str(out))} chars")
             results.append({"type": "tool_result", "tool_use_id": tu["id"], "content": str(out)})
@@ -255,9 +344,11 @@ def draft(state):
     reply = _call([{"role": "user", "content": prompt}], DRAFT_SYS)
     text = "\n".join(b.get("text", "") for b in reply["content"]
                      if b.get("type") == "text").strip()
-    saved = json.loads(agent.TOOL_FUNCS["create_draft_reply"](
-        ticket_ref=f"control-graph case about {', '.join(state['order_ids'])}",
-        draft_text=text))
+    with _span("create_draft_reply", "gen_ai.tool",
+               {"gen_ai.tool.name": "create_draft_reply"}):
+        saved = json.loads(agent.TOOL_FUNCS["create_draft_reply"](
+            ticket_ref=f"control-graph case about {', '.join(state['order_ids'])}",
+            draft_text=text))
     log(f"  [draft · AGENT] attempt {attempts + 1} -> {saved['draft_id']} saved by code")
     return {"draft_text": text, "draft_id": saved["draft_id"],
             "draft_attempts": attempts + 1, "tokens": MODEL_CALLS["tokens"]}
@@ -353,15 +444,15 @@ def finalize(state):
 
 def build_control_graph(checkpointer=None):
     b = StateGraph(CGState)
-    b.add_node("intake", intake)
-    b.add_node("fetch_facts", fetch_facts)
-    b.add_node("policy_gate", policy_gate)
-    b.add_node("propose_pending", propose_pending)
-    b.add_node("research", research)
-    b.add_node("draft", draft)
-    b.add_node("rubric_gate", rubric_gate)
-    b.add_node("approval", approval)
-    b.add_node("finalize", finalize)
+    b.add_node("intake", _traced("intake", intake))
+    b.add_node("fetch_facts", _traced("fetch_facts", fetch_facts))
+    b.add_node("policy_gate", _traced("policy_gate", policy_gate))
+    b.add_node("propose_pending", _traced("propose_pending", propose_pending))
+    b.add_node("research", _traced("research", research))
+    b.add_node("draft", _traced("draft", draft))
+    b.add_node("rubric_gate", _traced("rubric_gate", rubric_gate))
+    b.add_node("approval", _traced("approval", approval))
+    b.add_node("finalize", _traced("finalize", finalize))
     b.add_edge(START, "intake")
     b.add_edge("intake", "fetch_facts")
     b.add_edge("fetch_facts", "policy_gate")
