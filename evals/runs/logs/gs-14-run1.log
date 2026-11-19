@@ -1,0 +1,6 @@
+  [intake · SPINE] orders=[] case=status_inquiry
+  [policy_gate · GATE] pass
+  [draft · AGENT] attempt 1 -> DRAFT-0018 saved by code
+  [rubric_gate · GATE] pass
+  [approval · HUMAN] decision: {'approved': True, 'approver': 'eval'}
+  [finalize · SPINE] approved. Receipt (read back): {"draft_id": "DRAFT-0018", "draft_status": "approved", "pending_action": null, "refund_id": null, "approved_by": "eval"}

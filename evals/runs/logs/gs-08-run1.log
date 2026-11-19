@@ -1,0 +1,7 @@
+  [intake · SPINE] orders=['ORD-3101'] case=refund_request
+  [fetch · SPINE] ORD-3101 -> {"order_id": "ORD-3101", "eta": "2026-11-10", "item": "standing desk mat", "last_scan": "2026-11-10, delivered - left at front door", "ordered": "2026-11-06", "
+  [policy_gate · GATE] pass
+  [propose · SPINE] preview $49.99 == record price; submitted PEND-0002 (awaiting approval, nothing executed)
+  [research · AGENT] search {'query': 'refund for damaged item'} -> 1036 chars
+  [draft · AGENT] attempt 1 -> DRAFT-0018 saved by code
+  [rubric_gate · GATE] pass

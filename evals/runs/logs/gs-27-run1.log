@@ -1,0 +1,7 @@
+  [intake · SPINE] orders=['ORD-3102'] case=status_inquiry
+  [fetch · SPINE] ORD-3102 -> {"order_id": "ORD-3102", "eta": "2026-11-12", "item": "monitor stand", "last_scan": "2026-11-10, Chicago hub", "ordered": "2026-11-08", "price": 89.99, "status"
+  [policy_gate · GATE] pass
+  [draft · AGENT] attempt 1 -> DRAFT-0018 saved by code
+  [rubric_gate · GATE] pass
+  [approval · HUMAN] decision: {'approved': True, 'approver': 'eval'}
+  [finalize · SPINE] approved. Receipt (read back): {"draft_id": "DRAFT-0018", "draft_status": "approved", "pending_action": null, "refund_id": null, "approved_by": "eval", "order_status_now": "in transit - delayed at the regional hub"}

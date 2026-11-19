@@ -1,0 +1,3 @@
+  [intake · SPINE] orders=['ORD-9999'] case=refund_request
+  [fetch · SPINE] ORD-9999 -> Error: no order found with id 'ORD-9999'. Ask the customer to double-check the order id on their confirmation email - a single wrong digit produces this error.
+  [policy_gate · GATE] block - ORD-9999: no such order in the record
