@@ -9,7 +9,9 @@ a deep agent shows its plan before it acts):
              reader — the same record the eval gate grades).
   3. SORT    cluster each run's failures from its spans: policy
              blocks (with the gate's own reasons), rubric failures,
-             run errors, escalations, rejected approvals.
+             run errors, escalations, rejected approvals. Each
+             cluster is also tagged with its Three-Gulfs cause
+             (Shankar & Husain) — the diagnosis that routes the fix.
   4. REPORT  draft the weekly one-pager into analyst/reports/:
              runs, outcomes, tokens, cost per resolved ticket, and
              the failure categories counted — biggest first, because
@@ -58,6 +60,36 @@ CLUSTERS = {
     "approval_rejected": "Approvals rejected — a human said no at the gate",
 }
 
+# The Three Gulfs (Shankar & Husain, *Evals for AI Engineers*, O'Reilly
+# 2026) — the CAUSE layer over the symptom clusters above, adopted
+# Nov 21, 2026. The tag routes the fix: comprehension -> read more
+# traces before changing anything; specification -> tighten the
+# requirement (or the grader); generalization -> measure the rate,
+# then stronger interventions.
+GULFS = {
+    "policy_block": ("— (gate working as designed)",
+                     "not itself a failure. A RISING count is a "
+                     "comprehension signal: customers asking for things "
+                     "the policy does not cover — read those traces first"),
+    "rubric_fail": ("Specification",
+                    "the requirement — or the rubric itself — was not "
+                    "explicit or correct enough; tighten the spec or the "
+                    "grader (standing example: gs-18, the gate's "
+                    "string-match on amounts)"),
+    "run_error": ("Comprehension",
+                  "an input shape we had not understood; read the "
+                  "trace, comprehend the input, then specify the "
+                  "handling (standing example: gs-33, the missing "
+                  "order id)"),
+    "escalated_other": ("Comprehension",
+                        "unknown territory; look at more traces before "
+                        "changing anything"),
+    "approval_rejected": ("Specification",
+                          "the proposal and the human's requirement "
+                          "diverged; make the requirement explicit — and "
+                          "note the gate doing its job is also the "
+                          "correct outcome"),
+}
 
 def cluster_trace(t):
     """Sort one trace into failure clusters, from its spans alone."""
@@ -137,6 +169,8 @@ def run_pass(store_dir=None, today=None):
     if cluster_counts:
         for cluster, n in cluster_counts.most_common():
             lines.append(f"- **{cluster}** — {n} run(s). {CLUSTERS[cluster]}")
+            gulf, route = GULFS[cluster]
+            lines.append(f"  - cause (Three Gulfs): **{gulf}** — fix route: {route}")
             for m in cluster_members[cluster]:
                 for r in m["reasons"]:
                     lines.append(f"  - {m['case_id']} (trace {m['trace_id']}): {r}")
@@ -178,7 +212,10 @@ def run_pass(store_dir=None, today=None):
                     history.append(line)
         history.append(f"| {today} | {n} |")
         members = cluster_members.get(cluster, [])
+        gulf, route = GULFS[cluster]
         body = [f"# {cluster}", "", blurb + ".", "",
+                "## Cause (Three Gulfs)", "",
+                f"**{gulf}** — fix route: {route}.", "",
                 "## Passes", "", "| date | runs in this cluster |",
                 "|---|---|", *history, "", "## Latest pass members", ""]
         if members:

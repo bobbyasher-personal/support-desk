@@ -22,6 +22,18 @@ cluster, a passes table per page, so last week's claims are checked
 against this week's traces and a stale claim shows as a changed
 number. The Analyst is the wiki's single writer.
 
+**Cause tags (added Nov 21, 2026).** Each cluster also carries a
+cause from the **Three Gulfs** (Shankar & Husain, *Evals for AI
+Engineers*) — the diagnosis layer over the symptom list, because the
+symptom alone doesn't choose the fix. Comprehension → read more
+traces before changing anything; Specification → tighten the
+requirement (or the grader — gs-18's string-matched amounts were a
+specification failure *in the gate*); Generalization → measure the
+rate, then stronger interventions. Policy blocks are tagged "gate
+working as designed": not a failure, though a rising count is a
+comprehension signal. The mapping lives in `analyst.py`'s `GULFS`
+and appears in every report and wiki page.
+
 **Read-only by construction.** The Analyst imports the trace reader
 and the standard library — nothing that can write to the product.
 Its only writes land inside `analyst/`. A wrong Analyst can mislead
